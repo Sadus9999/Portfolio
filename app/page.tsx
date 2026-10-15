@@ -43,7 +43,7 @@ export default function LoginPage() {
         />
 
         <div className="login-fields">
-          <label className="line-input">
+          <label className={"line-input" + (login ? " has-value" : "")}>
             <span>Login</span>
             <input
               autoComplete="username"
@@ -53,7 +53,7 @@ export default function LoginPage() {
             />
           </label>
 
-          <label className="line-input">
+          <label className={"line-input" + (password ? " has-value" : "")}>
             <span>Password</span>
             <div className="password-row">
               <input
