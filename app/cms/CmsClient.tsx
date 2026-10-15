@@ -8,6 +8,14 @@ import {
   useRef,
   useState,
 } from "react"
+import { ListBulletIcon } from "@heroicons/react/20/solid"
+import { Squares2X2Icon } from "@heroicons/react/24/solid"
+import {
+  ArrowLeftIcon,
+  ArrowUpTrayIcon,
+  PencilSquareIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline"
 
 type GalleryItem = {
   id: string
@@ -40,57 +48,6 @@ const FILTERS = [
 
 type View = "list" | "grid" | "edit" | "upload"
 
-function Icon({
-  name,
-}: {
-  name: "list" | "grid" | "edit" | "trash" | "upload" | "back"
-}) {
-  const paths = {
-    list: (
-      <>
-        <path d="M8 6h12M8 12h12M8 18h12" />
-        <path d="M4 6h.01M4 12h.01M4 18h.01" />
-      </>
-    ),
-    grid: (
-      <>
-        <rect x="4" y="4" width="6" height="6" />
-        <rect x="14" y="4" width="6" height="6" />
-        <rect x="4" y="14" width="6" height="6" />
-        <rect x="14" y="14" width="6" height="6" />
-      </>
-    ),
-    edit: <path d="M4 20h4l11-11-4-4L4 16v4Zm9-13 4 4" />,
-    trash: (
-      <>
-        <path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13" />
-        <path d="M10 11v5M14 11v5" />
-      </>
-    ),
-    upload: (
-      <>
-        <path d="M12 16V4M7 9l5-5 5 5" />
-        <path d="M5 14v5h14v-5" />
-      </>
-    ),
-    back: <path d="M15 18l-6-6 6-6" />,
-  }
-
-  return (
-    <svg
-      className="ui-icon"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      {paths[name]}
-    </svg>
-  )
-}
-
 export default function CmsClient() {
   const [items, setItems] = useState<GalleryItem[]>([])
   const [view, setView] = useState<View>("list")
@@ -103,10 +60,45 @@ export default function CmsClient() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState("")
   const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [dropActive, setDropActive] = useState(false)
+
   const inputRef = useRef<HTMLInputElement>(null)
+  const dropDepthRef = useRef(0)
 
   useEffect(() => {
     load()
+  }, [])
+
+  useEffect(() => {
+    const currentState = window.history.state || {}
+    window.history.replaceState(
+      { ...currentState, cmsView: "list" },
+      "",
+      window.location.href
+    )
+
+    const onPopState = (event: PopStateEvent) => {
+      const nextView = event.state?.cmsView as View | undefined
+
+      if (nextView === "edit" && event.state?.editingId) {
+        setEditingId(event.state.editingId)
+        setView("edit")
+        return
+      }
+
+      if (nextView === "upload") {
+        setView("upload")
+        return
+      }
+
+      if (nextView === "list" || nextView === "grid") {
+        setPreviousView(nextView)
+        setView(nextView)
+      }
+    }
+
+    window.addEventListener("popstate", onPopState)
+    return () => window.removeEventListener("popstate", onPopState)
   }, [])
 
   async function load() {
@@ -147,14 +139,51 @@ export default function CmsClient() {
     return true
   }
 
+  function replaceHistoryState(next: "list" | "grid") {
+    const currentState = window.history.state || {}
+    window.history.replaceState(
+      { ...currentState, cmsView: next, editingId: undefined },
+      "",
+      window.location.href
+    )
+  }
+
+  function pushHistoryState(next: "edit" | "upload", editingId?: string) {
+    const currentState = window.history.state || {}
+    window.history.pushState(
+      { ...currentState, cmsView: next, editingId },
+      "",
+      window.location.href
+    )
+  }
+
   function switchBaseView(next: "list" | "grid") {
     setPreviousView(next)
     setView(next)
+    replaceHistoryState(next)
+  }
+
+  function openUpload() {
+    setView("upload")
+    pushHistoryState("upload")
   }
 
   function startEdit(id: string) {
     setEditingId(id)
     setView("edit")
+    pushHistoryState("edit", id)
+  }
+
+  function goBack() {
+    const currentView = window.history.state?.cmsView
+
+    if (currentView === "edit" || currentView === "upload") {
+      window.history.back()
+      return
+    }
+
+    setView(previousView)
+    replaceHistoryState(previousView)
   }
 
   function toggleCategory(category: string, current: string[]) {
@@ -210,6 +239,37 @@ export default function CmsClient() {
     })
 
     setDragIndex(targetIndex)
+  }
+
+  function onDropzoneDragEnter(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+    dropDepthRef.current += 1
+    setDropActive(true)
+  }
+
+  function onDropzoneDragOver(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+    event.dataTransfer.dropEffect = "copy"
+
+    if (!dropActive) {
+      setDropActive(true)
+    }
+  }
+
+  function onDropzoneDragLeave(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+    dropDepthRef.current = Math.max(0, dropDepthRef.current - 1)
+
+    if (dropDepthRef.current === 0) {
+      setDropActive(false)
+    }
+  }
+
+  async function onDropzoneDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault()
+    dropDepthRef.current = 0
+    setDropActive(false)
+    await acceptFiles(event.dataTransfer.files)
   }
 
   async function acceptFiles(fileList: FileList | File[]) {
@@ -272,7 +332,7 @@ export default function CmsClient() {
       setUploads([])
       setUploadClient("")
       setUploadCategories([])
-      setView(previousView)
+      goBack()
     }
   }
 
@@ -293,16 +353,23 @@ export default function CmsClient() {
   return (
     <main className="cms-shell">
       <header className="cms-header">
-        <button className="brand small" onClick={() => setView(previousView)}>
-          DEMIGOD
+        <button
+          className="brand-button"
+          onClick={() => {
+            if (view === "edit" || view === "upload") goBack()
+          }}
+          aria-label="Back to gallery"
+        >
+          <img
+            className="brand-logo brand-logo-header"
+            src="/demigod-logo.svg"
+            alt="Demigod"
+          />
         </button>
 
         <div className="header-actions">
           {view !== "upload" && (
-            <button
-              className="button button-secondary"
-              onClick={() => setView("upload")}
-            >
+            <button className="button button-secondary" onClick={openUpload}>
               Upload files
             </button>
           )}
@@ -321,7 +388,7 @@ export default function CmsClient() {
             <button
               className="button button-primary"
               onClick={async () => {
-                if (await publish()) setView(previousView)
+                if (await publish()) goBack()
               }}
               disabled={saving}
             >
@@ -348,8 +415,20 @@ export default function CmsClient() {
                 switchBaseView(view === "list" ? "grid" : "list")
               }
             >
-              <Icon name="list" />
-              <Icon name="grid" />
+              <ListBulletIcon
+                className={
+                  "view-icon view-icon-list" +
+                  (view === "list" ? " active" : "")
+                }
+                aria-hidden="true"
+              />
+              <Squares2X2Icon
+                className={
+                  "view-icon view-icon-grid" +
+                  (view === "grid" ? " active" : "")
+                }
+                aria-hidden="true"
+              />
               <span>zmień widok</span>
             </button>
           </div>
@@ -358,10 +437,7 @@ export default function CmsClient() {
             <div className="empty-admin">
               <h2>Galeria jest pusta</h2>
               <p>Wrzuć pierwsze pliki, żeby zacząć.</p>
-              <button
-                className="button button-primary"
-                onClick={() => setView("upload")}
-              >
+              <button className="button button-primary" onClick={openUpload}>
                 Upload files
               </button>
             </div>
@@ -390,12 +466,12 @@ export default function CmsClient() {
 
                   <div className="item-actions">
                     <button onClick={() => startEdit(item.id)}>
-                      <Icon name="edit" />
+                      <PencilSquareIcon className="action-icon" aria-hidden="true" />
                       edit
                     </button>
 
                     <button onClick={() => deleteItem(item)}>
-                      <Icon name="trash" />
+                      <TrashIcon className="action-icon" aria-hidden="true" />
                       delete
                     </button>
                   </div>
@@ -423,12 +499,12 @@ export default function CmsClient() {
 
                   <div className="grid-actions">
                     <button onClick={() => startEdit(item.id)}>
-                      <Icon name="edit" />
+                      <PencilSquareIcon className="action-icon" aria-hidden="true" />
                       edit
                     </button>
 
                     <button onClick={() => deleteItem(item)}>
-                      <Icon name="trash" />
+                      <TrashIcon className="action-icon" aria-hidden="true" />
                       delete
                     </button>
                   </div>
@@ -441,8 +517,8 @@ export default function CmsClient() {
 
       {view === "edit" && editing && (
         <section className="edit-screen">
-          <button className="back-link" onClick={() => setView(previousView)}>
-            <Icon name="back" />
+          <button className="back-link" onClick={goBack}>
+            <ArrowLeftIcon className="back-icon" aria-hidden="true" />
             back to gallery
           </button>
 
@@ -487,9 +563,7 @@ export default function CmsClient() {
                       key={category}
                       className={
                         "chip" +
-                        (editing.categories.includes(category)
-                          ? " active"
-                          : "")
+                        (editing.categories.includes(category) ? " active" : "")
                       }
                       onClick={() =>
                         updateEditing({
@@ -525,15 +599,36 @@ export default function CmsClient() {
 
       {view === "upload" && (
         <section className="upload-screen">
+          <button className="back-link" onClick={goBack}>
+            <ArrowLeftIcon className="back-icon" aria-hidden="true" />
+            back to gallery
+          </button>
+
           <div
-            className="dropzone"
-            onDragOver={(event) => event.preventDefault()}
-            onDrop={(event) => {
-              event.preventDefault()
-              acceptFiles(event.dataTransfer.files)
-            }}
+            className={
+              "dropzone " +
+              (uploads.length ? "has-files" : "initial") +
+              (dropActive ? " is-dragging" : "")
+            }
+            onDragEnter={onDropzoneDragEnter}
+            onDragOver={onDropzoneDragOver}
+            onDragLeave={onDropzoneDragLeave}
+            onDrop={onDropzoneDrop}
           >
-            <h1>{uploads.length ? "Drag more files here" : "Drag files here"}</h1>
+            <div className="dropzone-copy">
+              <h1>
+                {dropActive
+                  ? "Release files to upload"
+                  : uploads.length
+                    ? "Drag more files here"
+                    : "Drag files here"}
+              </h1>
+              <p className="dropzone-hint">
+                {dropActive
+                  ? "Drop them anywhere inside this area"
+                  : "JPG, PNG or WebP — you can drop multiple files at once"}
+              </p>
+            </div>
 
             <button
               className="button button-secondary full"
@@ -580,9 +675,7 @@ export default function CmsClient() {
                         key={category}
                         className={
                           "chip" +
-                          (uploadCategories.includes(category)
-                            ? " active"
-                            : "")
+                          (uploadCategories.includes(category) ? " active" : "")
                         }
                         onClick={() =>
                           setUploadCategories((current) =>
@@ -625,7 +718,7 @@ export default function CmsClient() {
                         )
                       }
                     >
-                      <Icon name="trash" />
+                      <TrashIcon className="action-icon" aria-hidden="true" />
                       delete
                     </button>
                   </div>
@@ -637,7 +730,7 @@ export default function CmsClient() {
                 onClick={addUploadedItems}
                 disabled={saving}
               >
-                <Icon name="upload" />
+                <ArrowUpTrayIcon className="upload-icon" aria-hidden="true" />
                 {saving ? "Publishing…" : "Upload to gallery"}
               </button>
             </>
