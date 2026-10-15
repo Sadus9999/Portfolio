@@ -64,6 +64,7 @@ export default function CmsClient() {
 
   const inputRef = useRef<HTMLInputElement>(null)
   const dropDepthRef = useRef(0)
+  const adminListRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     load()
@@ -76,6 +77,33 @@ export default function CmsClient() {
       "",
       window.location.href
     )
+
+    const restorePosition = (state: any) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (typeof state?.windowScrollY === "number") {
+            window.scrollTo(0, state.windowScrollY)
+          }
+
+          if (
+            adminListRef.current &&
+            typeof state?.listScrollTop === "number"
+          ) {
+            adminListRef.current.scrollTop = state.listScrollTop
+          }
+
+          if (state?.focusId) {
+            const target = document.querySelector(
+              `[data-item-id="${state.focusId}"]`
+            ) as HTMLElement | null
+
+            if (target && state?.cmsView === "grid") {
+              target.scrollIntoView({ block: "center" })
+            }
+          }
+        })
+      })
+    }
 
     const onPopState = (event: PopStateEvent) => {
       const nextView = event.state?.cmsView as View | undefined
@@ -94,6 +122,7 @@ export default function CmsClient() {
       if (nextView === "list" || nextView === "grid") {
         setPreviousView(nextView)
         setView(nextView)
+        restorePosition(event.state)
       }
     }
 
@@ -169,6 +198,21 @@ export default function CmsClient() {
   }
 
   function startEdit(id: string) {
+    const currentState = window.history.state || {}
+
+    window.history.replaceState(
+      {
+        ...currentState,
+        cmsView: previousView,
+        editingId: undefined,
+        focusId: id,
+        windowScrollY: window.scrollY,
+        listScrollTop: adminListRef.current?.scrollTop ?? 0,
+      },
+      "",
+      window.location.href
+    )
+
     setEditingId(id)
     setView("edit")
     pushHistoryState("edit", id)
@@ -272,6 +316,32 @@ export default function CmsClient() {
     await acceptFiles(event.dataTransfer.files)
   }
 
+  async function uploadSingleFile(file: File) {
+    const form = new FormData()
+    form.append("files", file)
+
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      body: form,
+    })
+
+    if (!response.ok) {
+      throw new Error(file.name)
+    }
+
+    const data = await response.json()
+    const uploaded = data.files?.[0] as UploadFile | undefined
+
+    if (!uploaded) {
+      throw new Error(file.name)
+    }
+
+    return {
+      ...uploaded,
+      title: uploaded.originalName.replace(/\.[^.]+$/, ""),
+    }
+  }
+
   async function acceptFiles(fileList: FileList | File[]) {
     const files = Array.from(fileList).filter((file) =>
       file.type.startsWith("image/")
@@ -280,50 +350,63 @@ export default function CmsClient() {
     if (!files.length) return
 
     setSaving(true)
+    setMessage("")
 
-    const form = new FormData()
-    files.forEach((file) => form.append("files", file))
+    const uploaded: UploadFile[] = []
+    const failed: string[] = []
 
-    const response = await fetch("/api/upload", {
-      method: "POST",
-      body: form,
-    })
+    // Upload each image as a separate request. This avoids request-size limits
+    // while still letting the user select/drop many files at once.
+    for (let i = 0; i < files.length; i += 3) {
+      const batch = files.slice(i, i + 3)
+
+      const results = await Promise.allSettled(
+        batch.map((file) => uploadSingleFile(file))
+      )
+
+      results.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+          uploaded.push(result.value)
+        } else {
+          failed.push(batch[index].name)
+        }
+      })
+    }
 
     setSaving(false)
 
-    if (!response.ok) {
-      setMessage("Upload nie powiódł się")
-      return
+    if (uploaded.length) {
+      setUploads((current) => [...current, ...uploaded])
+      setView("upload")
     }
 
-    const data = await response.json()
-
-    setUploads((current) => [
-      ...current,
-      ...data.files.map((file: UploadFile) => ({
-        ...file,
-        title: file.originalName.replace(/\.[^.]+$/, ""),
-      })),
-    ])
-
-    setView("upload")
+    if (failed.length) {
+      setMessage(
+        uploaded.length
+          ? `Dodano ${uploaded.length} plików. Nie udało się: ${failed.length}`
+          : "Upload nie powiódł się"
+      )
+    }
   }
 
   async function addUploadedItems() {
-    const start = items.length
-
-    const newItems: GalleryItem[] = uploads.map((file, index) => ({
+    const newItems: GalleryItem[] = uploads.map((file) => ({
       id: file.id,
       title: file.title,
       client: uploadClient,
       categories: uploadCategories,
       thumbnail: file.thumbnail,
       full: file.full,
-      order: start + index + 1,
+      order: 0,
       published: true,
     }))
 
-    const next = [...items, ...newItems]
+    // Newest first: every newly added batch goes to the beginning.
+    const next = [...newItems, ...items].map((item, index) => ({
+      ...item,
+      order: index + 1,
+    }))
+
     setItems(next)
 
     const ok = await publish(next)
@@ -442,11 +525,12 @@ export default function CmsClient() {
               </button>
             </div>
           ) : view === "list" ? (
-            <div className="admin-list">
+            <div className="admin-list" ref={adminListRef}>
               {items.map((item, index) => (
                 <article
                   className="list-row"
                   key={item.id}
+                  data-item-id={item.id}
                   draggable
                   onDragStart={() => onDragStart(index)}
                   onDragOver={(event) => onDragOver(event, index)}
@@ -484,6 +568,7 @@ export default function CmsClient() {
                 <article
                   className="grid-card"
                   key={item.id}
+                  data-item-id={item.id}
                   draggable
                   onDragStart={() => onDragStart(index)}
                   onDragOver={(event) => onDragOver(event, index)}
