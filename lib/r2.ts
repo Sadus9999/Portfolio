@@ -5,6 +5,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3"
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner"
 
 export type GalleryItem = {
   id: string
@@ -15,6 +16,8 @@ export type GalleryItem = {
   full: string
   order: number
   published: boolean
+  mediaType?: "image" | "video"
+  aspectRatio?: number
 }
 
 export type GalleryPayload = {
@@ -31,7 +34,7 @@ export const publicBaseUrl =
   process.env.R2_PUBLIC_URL ||
   "https://pub-eff24699f34649e8bb817dacedb2d952.r2.dev"
 
-function client() {
+export function r2Client() {
   const accountId = env("R2_ACCOUNT_ID")
 
   return new S3Client({
@@ -44,7 +47,7 @@ function client() {
   })
 }
 
-function bucket() {
+export function r2Bucket() {
   return process.env.R2_BUCKET || "demigod-portfolio"
 }
 
@@ -63,9 +66,9 @@ export async function loadGallery(): Promise<GalleryPayload> {
 }
 
 export async function saveGallery(payload: GalleryPayload) {
-  await client().send(
+  await r2Client().send(
     new PutObjectCommand({
-      Bucket: bucket(),
+      Bucket: r2Bucket(),
       Key: "gallery.json",
       Body: JSON.stringify(payload, null, 2),
       ContentType: "application/json; charset=utf-8",
@@ -79,9 +82,9 @@ export async function uploadObject(
   body: Buffer,
   contentType: string
 ) {
-  await client().send(
+  await r2Client().send(
     new PutObjectCommand({
-      Bucket: bucket(),
+      Bucket: r2Bucket(),
       Key: key,
       Body: body,
       ContentType: contentType,
@@ -97,10 +100,34 @@ export async function deleteObjectByUrl(url: string) {
   const key = decodeURIComponent(url.slice(publicBaseUrl.length + 1))
   if (!key || key === "gallery.json") return
 
-  await client().send(
+  await r2Client().send(
     new DeleteObjectCommand({
-      Bucket: bucket(),
+      Bucket: r2Bucket(),
       Key: key,
     })
   )
+}
+
+
+export async function createPresignedUpload(
+  key: string,
+  contentType: string
+) {
+  const command = new PutObjectCommand({
+    Bucket: r2Bucket(),
+    Key: key,
+    ContentType: contentType,
+    CacheControl: "public, max-age=31536000, immutable",
+  })
+
+  const uploadUrl = await getSignedUrl(
+    r2Client(),
+    command,
+    { expiresIn: 900 }
+  )
+
+  return {
+    uploadUrl,
+    publicUrl: `${publicBaseUrl}/${key}`,
+  }
 }
