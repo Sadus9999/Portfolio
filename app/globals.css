@@ -123,6 +123,22 @@ button {
   outline: 0;
 }
 
+.line-input input:-webkit-autofill,
+.line-input input:-webkit-autofill:hover,
+.line-input input:-webkit-autofill:focus,
+.line-input input:-webkit-autofill:active {
+  -webkit-text-fill-color: #fff !important;
+  caret-color: #fff;
+  -webkit-box-shadow: 0 0 0 1000px #000 inset !important;
+  box-shadow: 0 0 0 1000px #000 inset !important;
+  transition: background-color 9999s ease-out 0s;
+}
+
+.line-input input:autofill {
+  color: #fff;
+  background: #000;
+}
+
 .password-row {
   width: 100%;
   height: 100%;
