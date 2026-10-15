@@ -60,27 +60,26 @@ button {
   gap: 32px;
 }
 
-.brand {
-  color: #fff;
-  font-family: Orbitron, Inter, sans-serif;
-  font-weight: 900;
-  letter-spacing: .08em;
-  text-shadow: 0 0 22px rgba(104, 63, 190, .55);
-  background: transparent;
-  border: 0;
-  padding: 0;
+.brand-logo {
+  display: block;
+  object-fit: contain;
 }
 
-.brand-login {
-  font-size: 48px;
-  text-align: center;
+.brand-logo-login {
+  width: 334px;
   height: 117px;
-  display: grid;
-  place-items: center;
 }
 
-.brand.small {
-  font-size: 26px;
+.brand-logo-header {
+  width: 161px;
+  height: auto;
+}
+
+.brand-button {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
   cursor: pointer;
 }
 
@@ -134,7 +133,20 @@ button {
   border: 0;
   background: transparent;
   cursor: pointer;
-  color: var(--muted);
+  color: var(--purple-200);
+}
+
+.password-toggle {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 4px;
+}
+
+.password-toggle svg {
+  width: 24px;
+  height: 24px;
 }
 
 .button {
@@ -242,10 +254,40 @@ button {
   cursor: pointer;
 }
 
-.ui-icon {
+.view-icon,
+.action-icon,
+.back-icon,
+.upload-icon {
+  flex: 0 0 auto;
+}
+
+.view-icon-list {
+  width: 20px;
+  height: 20px;
+  color: var(--purple-100);
+}
+
+.view-icon-grid {
   width: 24px;
   height: 24px;
-  flex: 0 0 auto;
+  color: var(--purple-100);
+}
+
+.view-icon.active {
+  color: var(--purple-300);
+}
+
+.action-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--purple-200);
+}
+
+.back-icon,
+.upload-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--purple-200);
 }
 
 .admin-list {
@@ -379,6 +421,11 @@ button {
 .back-link {
   color: var(--muted);
   margin-bottom: 32px;
+  transition: color .18s ease;
+}
+
+.back-link:hover {
+  color: var(--white);
 }
 
 .edit-layout {
@@ -467,15 +514,50 @@ button {
 
 .dropzone {
   width: 100%;
-  min-height: 156px;
+  min-height: 180px;
   border: 1px dashed var(--purple-300);
   border-radius: 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 48px;
+  background: rgba(104, 63, 190, 0);
+  transition:
+    min-height .25s ease,
+    border-color .18s ease,
+    border-width .18s ease,
+    background .18s ease,
+    box-shadow .18s ease,
+    transform .18s ease;
+}
+
+.dropzone.initial {
+  min-height: min(584px, calc(100vh - 248px));
+}
+
+.dropzone.has-files {
+  min-height: 220px;
+}
+
+.dropzone.is-dragging {
+  border-width: 2px;
+  border-color: var(--purple-200);
+  background: rgba(104, 63, 190, .10);
+  box-shadow:
+    inset 0 0 0 1px rgba(130, 96, 201, .18),
+    0 0 36px rgba(104, 63, 190, .18);
+  transform: scale(.997);
+}
+
+.dropzone-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  pointer-events: none;
 }
 
 .dropzone h1 {
@@ -484,6 +566,23 @@ button {
   color: var(--purple-300);
   font-size: 24px;
   letter-spacing: .05em;
+  transition: color .18s ease, transform .18s ease;
+}
+
+.dropzone.is-dragging h1 {
+  color: var(--purple-100);
+  transform: translateY(-2px);
+}
+
+.dropzone-hint {
+  margin: 0;
+  color: var(--muted-2);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dropzone.is-dragging .dropzone-hint {
+  color: var(--muted);
 }
 
 .dropzone .button {
@@ -609,6 +708,10 @@ button {
   .upload-list {
     width: 100%;
   }
+
+  .dropzone.initial {
+    min-height: 420px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -632,6 +735,18 @@ button {
 
   .button {
     padding-inline: 24px;
+  }
+
+  .brand-logo-header {
+    width: 140px;
+  }
+
+  .dropzone {
+    padding: 32px 20px;
+  }
+
+  .dropzone.initial {
+    min-height: 360px;
   }
 
   .section-head {

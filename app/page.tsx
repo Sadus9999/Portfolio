@@ -1,6 +1,7 @@
 "use client"
 
 import { FormEvent, useState } from "react"
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline"
 import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
@@ -28,14 +29,18 @@ export default function LoginPage() {
       return
     }
 
-    router.push("/cms")
+    router.replace("/cms")
     router.refresh()
   }
 
   return (
     <main className="login-page">
       <form className="login-card" onSubmit={submit}>
-        <div className="brand brand-login">DEMIGOD</div>
+        <img
+          className="brand-logo brand-logo-login"
+          src="/demigod-logo.svg"
+          alt="Demigod"
+        />
 
         <div className="login-fields">
           <label className="line-input">
@@ -59,12 +64,16 @@ export default function LoginPage() {
                 aria-label="Password"
               />
               <button
-                className="icon-button"
+                className="icon-button password-toggle"
                 type="button"
                 onClick={() => setShowPassword((value) => !value)}
                 aria-label={showPassword ? "Ukryj hasło" : "Pokaż hasło"}
               >
-                {showPassword ? "◉" : "⊘"}
+                {showPassword ? (
+                  <EyeIcon aria-hidden="true" />
+                ) : (
+                  <EyeSlashIcon aria-hidden="true" />
+                )}
               </button>
             </div>
           </label>
