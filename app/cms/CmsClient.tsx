@@ -26,6 +26,8 @@ type GalleryItem = {
   full: string
   order: number
   published: boolean
+  mediaType?: "image" | "video"
+  aspectRatio?: number
 }
 
 type UploadFile = {
@@ -34,6 +36,8 @@ type UploadFile = {
   full: string
   thumbnail: string
   title: string
+  mediaType?: "image" | "video"
+  aspectRatio?: number
 }
 
 const FILTERS = [
@@ -316,7 +320,7 @@ export default function CmsClient() {
     await acceptFiles(event.dataTransfer.files)
   }
 
-  async function uploadSingleFile(file: File) {
+  async function uploadImage(file: File) {
     const form = new FormData()
     form.append("files", file)
 
@@ -339,12 +343,137 @@ export default function CmsClient() {
     return {
       ...uploaded,
       title: uploaded.originalName.replace(/\.[^.]+$/, ""),
+      mediaType: "image" as const,
     }
   }
 
+  async function createVideoPoster(file: File) {
+    const objectUrl = URL.createObjectURL(file)
+
+    try {
+      const video = document.createElement("video")
+      video.preload = "metadata"
+      video.muted = true
+      video.playsInline = true
+      video.src = objectUrl
+
+      await new Promise<void>((resolve, reject) => {
+        video.onloadedmetadata = () => resolve()
+        video.onerror = () => reject(new Error("Cannot read video metadata"))
+      })
+
+      const width = video.videoWidth
+      const height = video.videoHeight
+
+      if (!width || !height) {
+        throw new Error("Invalid video dimensions")
+      }
+
+      const targetTime = Math.min(0.15, Math.max(0, video.duration / 20))
+
+      await new Promise<void>((resolve, reject) => {
+        const done = () => resolve()
+        video.onseeked = done
+        video.onerror = () => reject(new Error("Cannot read video frame"))
+
+        if (targetTime > 0) {
+          video.currentTime = targetTime
+        } else {
+          requestAnimationFrame(done)
+        }
+      })
+
+      const maxSide = 1400
+      const scale = Math.min(1, maxSide / Math.max(width, height))
+      const canvas = document.createElement("canvas")
+      canvas.width = Math.max(1, Math.round(width * scale))
+      canvas.height = Math.max(1, Math.round(height * scale))
+
+      const context = canvas.getContext("2d")
+      if (!context) throw new Error("Cannot create video poster")
+
+      context.drawImage(video, 0, 0, canvas.width, canvas.height)
+
+      const poster = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob(
+          (blob) => (blob ? resolve(blob) : reject(new Error("Cannot create poster"))),
+          "image/jpeg",
+          0.88
+        )
+      })
+
+      return {
+        poster,
+        aspectRatio: width / height,
+      }
+    } finally {
+      URL.revokeObjectURL(objectUrl)
+    }
+  }
+
+  async function uploadVideo(file: File) {
+    const { poster, aspectRatio } = await createVideoPoster(file)
+
+    const signResponse = await fetch("/api/upload/video-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fileName: file.name,
+        contentType: "video/mp4",
+      }),
+    })
+
+    if (!signResponse.ok) {
+      throw new Error(file.name)
+    }
+
+    const signed = await signResponse.json()
+
+    const uploadResponse = await fetch(signed.uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": "video/mp4" },
+      body: file,
+    })
+
+    if (!uploadResponse.ok) {
+      throw new Error(file.name)
+    }
+
+    const posterForm = new FormData()
+    posterForm.append("id", signed.id)
+    posterForm.append("poster", poster, "poster.jpg")
+
+    const posterResponse = await fetch("/api/upload/video-poster", {
+      method: "POST",
+      body: posterForm,
+    })
+
+    if (!posterResponse.ok) {
+      throw new Error(file.name)
+    }
+
+    const posterData = await posterResponse.json()
+
+    return {
+      id: signed.id,
+      originalName: file.name,
+      full: signed.publicUrl,
+      thumbnail: posterData.thumbnail,
+      title: file.name.replace(/\.[^.]+$/, ""),
+      mediaType: "video" as const,
+      aspectRatio,
+    }
+  }
+
+  async function uploadSingleFile(file: File) {
+    return file.type === "video/mp4"
+      ? uploadVideo(file)
+      : uploadImage(file)
+  }
+
   async function acceptFiles(fileList: FileList | File[]) {
-    const files = Array.from(fileList).filter((file) =>
-      file.type.startsWith("image/")
+    const files = Array.from(fileList).filter(
+      (file) => file.type.startsWith("image/") || file.type === "video/mp4"
     )
 
     if (!files.length) return
@@ -355,8 +484,8 @@ export default function CmsClient() {
     const uploaded: UploadFile[] = []
     const failed: string[] = []
 
-    // Upload each image as a separate request. This avoids request-size limits
-    // while still letting the user select/drop many files at once.
+    // Images still use the server image pipeline. MP4 files upload directly to R2
+    // with a browser-generated poster, so their original dimensions/aspect ratio stay intact.
     for (let i = 0; i < files.length; i += 3) {
       const batch = files.slice(i, i + 3)
 
@@ -399,6 +528,8 @@ export default function CmsClient() {
       full: file.full,
       order: 0,
       published: true,
+      mediaType: file.mediaType || "image",
+      aspectRatio: file.aspectRatio,
     }))
 
     // Newest first: every newly added batch goes to the beginning.
@@ -544,7 +675,7 @@ export default function CmsClient() {
                     <div className="item-copy">
                       <h2>{item.title || "Bez tytułu"}</h2>
                       <p>{item.client || "Bez klienta"}</p>
-                      <small>{item.full.split("/").pop()}</small>
+                      <small>{item.mediaType === "video" ? "MP4 · " : ""}{item.full.split("/").pop()}</small>
                     </div>
                   </div>
 
@@ -711,7 +842,7 @@ export default function CmsClient() {
               <p className="dropzone-hint">
                 {dropActive
                   ? "Drop them anywhere inside this area"
-                  : "JPG, PNG or WebP — you can drop multiple files at once"}
+                  : "JPG, PNG, WebP or MP4 — you can drop multiple files at once"}
               </p>
             </div>
 
@@ -728,7 +859,7 @@ export default function CmsClient() {
               hidden
               multiple
               type="file"
-              accept="image/*"
+              accept="image/*,video/mp4"
               onChange={(event: ChangeEvent<HTMLInputElement>) => {
                 if (event.target.files) {
                   acceptFiles(event.target.files)

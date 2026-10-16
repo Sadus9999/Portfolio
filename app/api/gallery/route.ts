@@ -33,6 +33,10 @@ export async function PUT(request: Request) {
   await saveGallery({
     items: items.map((item, index) => ({
       ...item,
+      mediaType:
+        item.mediaType === "video" || /\.mp4(?:$|[?#])/i.test(item.full || "")
+          ? "video"
+          : "image",
       order: index + 1,
     })),
   })
