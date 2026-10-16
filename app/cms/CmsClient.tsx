@@ -28,6 +28,8 @@ type GalleryItem = {
   published: boolean
   mediaType?: "image" | "video"
   aspectRatio?: number
+  showInWidget?: boolean
+  widgetSelectedAt?: number
 }
 
 type UploadFile = {
@@ -248,6 +250,54 @@ export default function CmsClient() {
         item.id === editingId ? { ...item, ...patch } : item
       )
     )
+  }
+
+  function setWidgetVisibility(checked: boolean) {
+    if (!editingId) return
+
+    setItems((current) => {
+      const selectedAt = Date.now()
+
+      const next = current.map((item) => {
+        if (item.id !== editingId) return item
+
+        return checked
+          ? {
+              ...item,
+              showInWidget: true,
+              widgetSelectedAt: selectedAt,
+            }
+          : {
+              ...item,
+              showInWidget: false,
+              widgetSelectedAt: undefined,
+            }
+      })
+
+      if (!checked) return next
+
+      const selected = next
+        .filter((item) => item.showInWidget)
+        .sort(
+          (a, b) =>
+            (b.widgetSelectedAt ?? 0) -
+            (a.widgetSelectedAt ?? 0)
+        )
+
+      const keepIds = new Set(
+        selected.slice(0, 3).map((item) => item.id)
+      )
+
+      return next.map((item) =>
+        item.showInWidget && !keepIds.has(item.id)
+          ? {
+              ...item,
+              showInWidget: false,
+              widgetSelectedAt: undefined,
+            }
+          : item
+      )
+    })
   }
 
   async function deleteItem(item: GalleryItem) {
@@ -807,6 +857,17 @@ export default function CmsClient() {
                   }
                 />
                 <span>Published</span>
+              </label>
+
+              <label className="switch-row">
+                <input
+                  type="checkbox"
+                  checked={editing.showInWidget === true}
+                  onChange={(e) =>
+                    setWidgetVisibility(e.target.checked)
+                  }
+                />
+                <span>Show in homepage widget</span>
               </label>
             </div>
           </div>
