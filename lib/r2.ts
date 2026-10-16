@@ -18,6 +18,8 @@ export type GalleryItem = {
   published: boolean
   mediaType?: "image" | "video"
   aspectRatio?: number
+  showInWidget?: boolean
+  widgetSelectedAt?: number
 }
 
 export type GalleryPayload = {
