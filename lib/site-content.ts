@@ -20,7 +20,7 @@ export type SiteContent = {
   }
   about: { statement: string; cta: string }
   services: Array<{ id: string; title: string; description: string; image: string }>
-  caseStudies: Array<{ id: string; title: string; category: string; image: string; href: string }>
+  caseStudies: Array<{ id: string; title: string; category: string; description?: string; image: string; href: string }>
   featuredWorkIds: string[]
   capabilities: {
     statement: string
@@ -57,7 +57,7 @@ export const defaultSiteContent: SiteContent = {
   ],
   caseStudies: [
     { id: "luisa", title: "Premium Online Store", category: "UX/UI Design", image: "/home/case-01.png", href: "/case-studies" },
-    { id: "auto-parts", title: "Auto Parts Store", category: "UX/UI Design", image: "/home/case-02.png", href: "/case-studies" },
+    { id: "auto-parts", title: "Auto Parts Store", description: "A straightforward store for finding and buying car parts.", category: "UX/UI Design", image: "/home/case-02.png", href: "/case-studies" },
     { id: "corporate", title: "Corporate Website", category: "UX/UI Design", image: "/home/case-03.png", href: "/case-studies" },
   ],
   featuredWorkIds: [],
@@ -114,6 +114,7 @@ export function parseSiteContent(raw: unknown): SiteContent {
     assertText(item.id, "caseStudy.id", 100)
     assertText(item.title, "caseStudy.title")
     assertText(item.category, "caseStudy.category")
+    if (item.description !== undefined) assertText(item.description, "caseStudy.description", 500)
     assertUrl(item.image, "caseStudy.image")
     assertUrl(item.href, "caseStudy.href")
   }
