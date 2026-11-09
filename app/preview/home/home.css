@@ -348,3 +348,50 @@
   .hero-headline h1 > em { font-size: min(11.25vw, 13svh); }
   .hero-cta { min-height: 40px; }
 }
+
+/* Desktop hero typography contract:
+   fixed 16 / 13 / 16px, fixed 365×52 CTA.
+   Both title lines scale together from the available line width
+   (viewport minus 32px left and 235px right). */
+@media (min-width: 901px) {
+  .hero-note-left {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  .hero-note-right {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .hero-eyebrow {
+    font-size: 16px;
+    line-height: 1.2;
+  }
+  .hero-headline {
+    gap: clamp(14px, 2.2vh, 32px);
+  }
+  .hero-headline h1 {
+    width: calc(100vw - 267px);
+    max-width: calc(100vw - 267px);
+  }
+  .hero-headline h1 > span {
+    font-size: calc((100vw - 267px) * 0.135);
+    line-height: .89;
+    letter-spacing: .05em;
+  }
+  .hero-headline h1 > em {
+    font-size: calc((100vw - 267px) * 0.143);
+    line-height: .89;
+  }
+  .hero-cta {
+    width: 365px;
+    min-width: 365px;
+    max-width: 365px;
+    height: 52px;
+    min-height: 52px;
+    max-height: 52px;
+    padding: 0;
+    flex-shrink: 0;
+    font-size: 16px;
+  }
+}
+/* Tablet retains fluid sizing, unaffected by the desktop's 235px title inset. */
