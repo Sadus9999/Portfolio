@@ -291,3 +291,19 @@
   .home-about .home-statement,.home-capabilities .home-statement { letter-spacing: 0; }
   .home-works .home-section-heading { padding-top: 8px; }
 }
+
+/* Match Figma document flow: navigation is a separate 86px row,
+   followed by the 719px desktop / 581px mobile hero. */
+.home-header { position: relative; inset: auto; }
+.home-hero { height: 719px; min-height: 719px; }
+.hero-content { height: 719px; padding: 50px 32px 62px; }
+@media (max-width: 900px) {
+ .home-header { height: 86px; }
+ .home-hero { height: 719px; min-height: 719px; }
+ .hero-content { height: 719px; padding-top: 50px; }
+}
+@media (max-width: 620px) {
+ .home-header { height: 86px; }
+ .home-hero { height: 581px; min-height: 581px; }
+ .hero-content { height: 581px; padding: 50px 16px 62px; }
+}
