@@ -51,14 +51,14 @@ export const defaultSiteContent: SiteContent = {
     cta: "More about me",
   },
   services: [
-    { id: "uiux", title: "UX/UI Design", description: "Designing clear, conversion-focused interfaces with a strong emphasis on UI and real product usability.", image: "" },
-    { id: "graphic", title: "Graphic Design", description: "Designer by education and passion, with 15+ years of experience in visual communication and branding.", image: "" },
-    { id: "motion", title: "Motion Design", description: "Creating explainer videos, product animations, and visual stories using motion and animation.", image: "" },
+    { id: "graphic", title: "Graphic Design", description: "Designer by education and passion, with 15+ years of experience in visual communication and branding.", image: "/home/service-graphic.png" },
+    { id: "uiux", title: "UX/UI Design", description: "Designing clear, conversion-focused interfaces with a strong emphasis on UI and real product usability.", image: "/home/service-uxui.png" },
+    { id: "motion", title: "Motion Design", description: "Creating explainer videos, product animations, and visual stories using motion and animation.", image: "/home/service-motion.png" },
   ],
   caseStudies: [
-    { id: "neonove", title: "NeoNove", category: "UX/UI Design", image: "", href: "/case-studies/neonove" },
-    { id: "kr-motors", title: "KR Motors", category: "UX/UI Design", image: "", href: "/case-studies/kr-motors" },
-    { id: "orla", title: "Orla Technologies", category: "UX/UI Design", image: "", href: "/case-studies/orla" },
+    { id: "luisa", title: "Premium Online Store", category: "UX/UI Design", image: "/home/case-01.png", href: "/case-studies" },
+    { id: "auto-parts", title: "Auto Parts Store", category: "UX/UI Design", image: "/home/case-02.png", href: "/case-studies" },
+    { id: "corporate", title: "Corporate Website", category: "UX/UI Design", image: "/home/case-03.png", href: "/case-studies" },
   ],
   featuredWorkIds: [],
   capabilities: {
