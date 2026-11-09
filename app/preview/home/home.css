@@ -280,3 +280,14 @@
   .home-contact { min-height: 350px; padding-inline:16px; }
   .home-footer { padding: 0 16px 32px; }
 }
+
+/* Exact emphasis and image treatments from the Figma artboards */
+.home-accent { font-weight: 700; color: #683fbe; }
+.home-logo img { width:100%; height:auto; }
+.home-footer > img { aspect-ratio: 172 / 25; object-fit: contain; }
+.service-card img { flex: 0 0 auto; }
+.case-card img,.work-tile img { border-radius: inherit; }
+@media(max-width:620px) {
+  .home-about .home-statement,.home-capabilities .home-statement { letter-spacing: 0; }
+  .home-works .home-section-heading { padding-top: 8px; }
+}
