@@ -112,7 +112,9 @@ export default function PlanetSequence({ base, first, last, autoplayEnd }: Props
     function update() {
       if (phase !== "scroll" || disposed || !region.current) return
       const rect = region.current.getBoundingClientRect()
-      const length = Math.max(1, rect.height - innerHeight)
+      // The visual hero matches the Figma artboard height; scrub across
+      // the following viewport rather than adding an empty 260vh section.
+      const length = Math.max(1, window.innerHeight * 1.25)
       const p = clamp(-rect.top / length, 0, 1)
       wanted = clamp(autoplayEnd + Math.round(p * (last - autoplayEnd)), autoplayEnd, last)
       if (!display(wanted)) {
