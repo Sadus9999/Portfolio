@@ -12,6 +12,15 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: c.seo.title, description: c.seo.description }
 }
 
+const highlightPattern = /(6 years of experience|15 years in digital design|limited time and budget|e-commerce|design systems|UX principles)/gi
+function HighlightedStatement({ value }: { value: string }) {
+  return <>{value.split(highlightPattern).map((part, i) =>
+    /^(6 years of experience|15 years in digital design|limited time and budget|e-commerce|design systems|UX principles)$/i.test(part)
+      ? <strong key={i} className="home-accent">{part}</strong>
+      : <span key={i}>{part}</span>
+  )}</>
+}
+
 function Heading({ children }: { children: React.ReactNode }) {
   return <div className="home-section-heading"><h2>{children}</h2><div className="home-divider" /></div>
 }
@@ -34,7 +43,7 @@ export default async function PreviewHomePage() {
     <main className="demigod-home">
       <header className="home-header">
         <Link href="/preview/home" className="home-logo" aria-label="DEMIGOD homepage">
-          <img src="/demigod-logo.svg" alt="DEMIGOD" />
+          <img src="/home/demigod-wordmark.svg" alt="DEMIGOD" />
         </Link>
         <nav className="home-nav" aria-label="Main navigation">
           <a href="#top">Home</a><a href="#about">About me</a>
@@ -59,7 +68,7 @@ export default async function PreviewHomePage() {
 
       <section className="home-section home-about" id="about">
         <Heading>About me</Heading>
-        <p className="home-statement">{content.about.statement}</p>
+        <p className="home-statement"><HighlightedStatement value={content.about.statement}/></p>
         <Link href="/about" className="home-pill home-center-cta">{content.about.cta}</Link>
       </section>
 
@@ -104,7 +113,7 @@ export default async function PreviewHomePage() {
       </section>
 
       <section className="home-section home-capabilities">
-        <p className="home-statement">{content.capabilities.statement}</p>
+        <p className="home-statement"><HighlightedStatement value={content.capabilities.statement}/></p>
         <div className="capabilities-content">
           <div className="capabilities-grid">
             {content.capabilities.columns.map(col => (
@@ -123,7 +132,7 @@ export default async function PreviewHomePage() {
         <a className="contact-mail" href={"mailto:"+content.contact.email}>{content.contact.email}</a>
       </section>
       <footer className="home-footer">
-        <img src="/demigod-logo.svg" alt="DEMIGOD" />
+        <img src="/home/demigod-wordmark.svg" alt="DEMIGOD" />
         <div className="footer-bottom">
           <div className="footer-socials"><a href="https://www.linkedin.com/in/michal-okon/" target="_blank" rel="noopener noreferrer">in</a><a href="https://dribbble.com/Michal_Okon" target="_blank" rel="noopener noreferrer">◉</a><a href="https://www.behance.net/michalokon" target="_blank" rel="noopener noreferrer">Bē</a></div>
           <p>© {new Date().getFullYear()} DEMIGOD. All rights reserved.</p>
