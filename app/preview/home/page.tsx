@@ -20,10 +20,15 @@ export default async function PreviewHomePage() {
   const content = await loadSiteContent()
   const gallery = await loadGallery().catch(() => ({ items: [] }))
   const published = gallery.items.filter(x => x.published).sort((a,b) => a.order - b.order)
-  const featured = content.featuredWorkIds.length
-    ? content.featuredWorkIds.map(id => published.find(item => item.id === id)).filter((x): x is (typeof published)[number] => !!x)
-    : published.filter(item => item.showInWidget).slice(0, 5)
-  const works = featured.length ? featured : published.slice(0, 5)
+  const selected = content.featuredWorkIds.map(id => published.find(item => item.id === id)).filter((x): x is (typeof published)[number] => !!x)
+  const originalFigmaWorks = [
+    { id: "orla", title: "Logo Orla Technologies", client: "Orla Technologies", thumbnail: "/home/work-orla.png", full: "/home/work-orla.png" },
+    { id: "pebblify", title: "Pebblify Mobile App", client: "Pebblify", thumbnail: "/home/work-pebblify.png", full: "/home/work-pebblify.png" },
+    { id: "outdoor", title: "Advertising on buses", client: "Outdoor", thumbnail: "/home/work-bus.png", full: "/home/work-bus.png" },
+    { id: "web", title: "Web Design", client: "Digital Design", thumbnail: "/home/work-feature-05.png", full: "/home/work-feature-05.png" },
+    { id: "visual", title: "Digital visual", client: "Digital Design", thumbnail: "/home/work-feature-04.png", full: "/home/work-feature-04.png" },
+  ]
+  const works = content.featuredWorkIds.length ? selected : originalFigmaWorks
   const h = content.hero
   return (
     <main className="demigod-home">
@@ -78,8 +83,7 @@ export default async function PreviewHomePage() {
           {content.caseStudies.map((item, i) => (
             <Link className={"case-card case-card-" + i} key={item.id} href={item.href}>
               {item.image && <img src={item.image} alt={item.title}/>}
-              <div className="case-label">{item.category}</div>
-              <span className="case-name">{item.title}</span>
+              <span className="sr-only">{item.title}</span>
             </Link>
           ))}
         </div>
@@ -87,12 +91,12 @@ export default async function PreviewHomePage() {
 
       <section className="home-section home-works" id="portfolio">
         <Heading>Portfolio</Heading>
-        <h2 className="home-works-title"><span>BEST</span> WORKS</h2>
+        <h2 className="home-works-title"><span>BEST</span><span>WORKS</span></h2>
         <div className="works-grid">
           {works.slice(0,5).map((item, i) => (
             <a key={item.id} className={"work-tile work-tile-"+i} href={item.full} target="_blank" rel="noopener noreferrer">
               <img src={item.thumbnail || item.full} alt={item.title || item.client}/>
-              <span className="work-label">{item.title || item.client}</span>
+              <span className="sr-only">{item.title || item.client}</span>
             </a>
           ))}
           <Link href="/portfolio" className="home-pill works-cta">SEE ALL WORKS</Link>
@@ -120,7 +124,10 @@ export default async function PreviewHomePage() {
       </section>
       <footer className="home-footer">
         <img src="/demigod-logo.svg" alt="DEMIGOD" />
-        <p>© {new Date().getFullYear()} DEMIGOD. All rights reserved.</p>
+        <div className="footer-bottom">
+          <div className="footer-socials"><a href="https://www.linkedin.com/in/michal-okon/" target="_blank" rel="noopener noreferrer">in</a><a href="https://dribbble.com/Michal_Okon" target="_blank" rel="noopener noreferrer">◉</a><a href="https://www.behance.net/michalokon" target="_blank" rel="noopener noreferrer">Bē</a></div>
+          <p>© {new Date().getFullYear()} DEMIGOD. All rights reserved.</p>
+        </div>
       </footer>
     </main>
   )
