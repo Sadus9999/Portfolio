@@ -152,6 +152,7 @@ export default function SiteEditor() {
             <div className="site-divider" />
             <div className="site-grid">
               {(["title","category","image","href"] as const).map(k => field(k,s[k],v=>patch({caseStudies:content.caseStudies.map((x,j)=>i===j?{...x,[k]:v}:x)})))}
+              {field("Short description", s.description || "", v => patch({caseStudies:content.caseStudies.map((x,j)=>i===j?{...x,description:v}:x)}), true)}
             </div>
           </div>)}
         </section>
