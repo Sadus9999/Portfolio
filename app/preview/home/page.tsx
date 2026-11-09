@@ -4,6 +4,7 @@ import { loadGallery } from "@/lib/r2"
 import { loadSiteContent } from "@/lib/site-content"
 import PlanetSequence from "./PlanetSequence"
 import MobileMenu from "./MobileMenu"
+import MediaCard from "./MediaCard"
 import "./home.css"
 
 export const dynamic = "force-dynamic"
@@ -78,7 +79,7 @@ export default async function PreviewHomePage() {
         <Heading>What I do?</Heading>
         <div className="service-grid">
           {content.services.map(service => (
-            <article className="service-card" key={service.id}>
+            <article className="service-card media-frame" key={service.id}>
               {service.image && <img src={service.image} alt="" />}
               <div className="service-info">
                 <h3>{service.title}</h3><p>{service.description}</p>
@@ -92,10 +93,15 @@ export default async function PreviewHomePage() {
         <div className="home-heading-row"><Heading>Case Studies</Heading><Link href="/case-studies">See more ›</Link></div>
         <div className="case-grid">
           {content.caseStudies.map((item, i) => (
-            <Link className={"case-card case-card-" + i} key={item.id} href={item.href}>
-              {item.image && <img src={item.image} alt={item.title}/>}
-              <span className="sr-only">{item.title}</span>
-            </Link>
+            <MediaCard
+              key={item.id}
+              variant="case"
+              className={"case-card case-card-" + i}
+              href={item.href}
+              image={item.image}
+              title={item.title}
+              description={item.description}
+            />
           ))}
         </div>
       </section>
@@ -105,10 +111,16 @@ export default async function PreviewHomePage() {
         <h2 className="home-works-title"><span>BEST</span><span>WORKS</span></h2>
         <div className="works-grid">
           {works.slice(0,5).map((item, i) => (
-            <a key={item.id} className={"work-tile work-tile-"+i} href={item.full} target="_blank" rel="noopener noreferrer">
-              <img src={item.thumbnail || item.full} alt={item.title || item.client}/>
-              <span className="sr-only">{item.title || item.client}</span>
-            </a>
+            <MediaCard
+              key={item.id}
+              variant="portfolio"
+              className={"work-tile work-tile-" + i}
+              href={item.full}
+              image={item.thumbnail || item.full}
+              title={item.title || item.client}
+              description={item.client}
+              external
+            />
           ))}
           <Link href="/portfolio" className="home-pill works-cta">SEE ALL WORKS</Link>
         </div>
