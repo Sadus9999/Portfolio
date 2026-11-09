@@ -395,3 +395,68 @@
   }
 }
 /* Tablet retains fluid sizing, unaffected by the desktop's 235px title inset. */
+
+
+/* Unified media shell: real 1px CSS gradient border, no nested Figma frames.
+   Inner content is independent for What I do / Case Studies / Best Works. */
+.demigod-home .media-frame {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(#0b0911, #0b0911) padding-box,
+    linear-gradient(132deg,
+      rgba(173,137,233,.9) 0%,
+      rgba(104,63,190,.56) 31%,
+      rgba(49,29,82,.85) 64%,
+      rgba(169,121,236,.75) 100%) border-box;
+  border-radius: 8px;
+  isolation: isolate;
+  overflow: hidden;
+}
+.demigod-home .service-card.media-frame { background:
+    linear-gradient(135deg,#111016,#080809) padding-box,
+    linear-gradient(132deg,rgba(173,137,233,.9),rgba(104,63,190,.56) 31%,rgba(49,29,82,.85) 64%,rgba(169,121,236,.75)) border-box;
+}
+.demigod-home .media-card { position: relative; display: block; }
+.demigod-home .media-card > img { border-radius: 7px; }
+.demigod-home .media-card-caption {
+  position: absolute;
+  z-index: 2;
+  inset: auto 1px 1px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: clamp(80px, 7.5vw, 155px);
+  padding: clamp(18px,2vw,36px) clamp(12px,1.5vw,28px) clamp(12px,1vw,22px);
+  background: linear-gradient(180deg, transparent 0%, rgba(8,5,15,.9) 48%, #08050e 100%);
+  color: #f5f0ff;
+}
+.demigod-home .media-card-copy { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.demigod-home .media-card-copy strong {
+  font: 500 clamp(13px,1.25vw,26px)/1.35 "Inter",sans-serif;
+  overflow-wrap: anywhere;
+}
+.demigod-home .media-card-copy small {
+  font: 400 clamp(11px,.95vw,21px)/1.5 "Inter",sans-serif;
+  color: #c1b4d4;
+  overflow-wrap: anywhere;
+}
+.demigod-home .media-card-chevron {
+  display: grid;
+  flex: 0 0 clamp(28px,2.6vw,48px);
+  width: clamp(28px,2.6vw,48px);
+  height: clamp(28px,2.6vw,48px);
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid #a790d9;
+  color: #f0ecf9;
+}
+.demigod-home .media-card-chevron svg { width: 54%; height: 54%; }
+/* Portfolio widget deliberately has only name and short description, no chevron. */
+.demigod-home .media-card--portfolio .media-card-caption { min-height: clamp(66px,6.6vw,125px); }
+@media (max-width:620px) {
+  .demigod-home .media-card-caption { min-height:85px; padding: 22px 12px 13px; }
+  .demigod-home .media-card-copy strong { font-size: 14px; }
+  .demigod-home .media-card-copy small { font-size: 12px; }
+  .demigod-home .media-card-chevron { width: 30px; height: 30px; flex-basis:30px; }
+}
