@@ -632,6 +632,7 @@ export default function CmsClient() {
         </button>
 
         <div className="header-actions">
+          <a className="button button-secondary" href="/cms/site" style={{ textDecoration: "none" }}>Edit homepage</a>
           {view !== "upload" && (
             <button className="button button-secondary" onClick={openUpload}>
               Upload files
