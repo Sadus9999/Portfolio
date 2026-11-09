@@ -3,6 +3,7 @@ import Link from "next/link"
 import { loadGallery } from "@/lib/r2"
 import { loadSiteContent } from "@/lib/site-content"
 import PlanetSequence from "./PlanetSequence"
+import MobileMenu from "./MobileMenu"
 import "./home.css"
 
 export const dynamic = "force-dynamic"
@@ -51,6 +52,7 @@ export default async function PreviewHomePage() {
           <a href="#contact">Contact</a>
         </nav>
         <a className="home-pill header-cta" href="#contact">Let&apos;s talk</a>
+        <MobileMenu />
       </header>
 
       <section className="home-hero" id="top">
