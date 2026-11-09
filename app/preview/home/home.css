@@ -151,3 +151,132 @@
 @media (prefers-reduced-motion: reduce) {
   .demigod-home * { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
 }
+
+
+/* Pixel-alignment pass: original Figma HOME Desktop 1280 x 5355.
+   These overrides intentionally preserve the three designed compositions. */
+.demigod-home { --home-padding: clamp(16px, 2.5vw, 32px); --home-content-width: 1280px; }
+.home-header { height: 86px; }
+.home-hero { height: 805px; min-height: 805px; }
+.planet-scroll { height: 100%; }
+.planet-sticky { position: absolute; inset: 0; height: 100%; }
+.planet-sticky img { object-fit: cover; object-position: center center; }
+.hero-content { position: relative; top: auto; height: 805px; min-height: 0; padding: 136px 32px 62px; }
+.hero-headline h1 span { font-size: clamp(60px, calc(8.51vw + 28px), 137px); }
+.hero-headline h1 em { font-size: clamp(63px, calc(9.06vw + 29px), 145px); }
+.hero-headline { gap: 32px; }
+.hero-headline h1 span { letter-spacing: .05em; margin-bottom: -12px; }
+.hero-headline h1 em { letter-spacing: 0; }
+.hero-cta { padding-inline: 66px; }
+.home-section-heading { min-height: 116px; padding: 40px 0; }
+.home-section-heading h2 { margin-bottom: 16px; }
+.home-about { padding-bottom: 64px; }
+.home-about .home-statement { font-size: clamp(22px, 3.125vw, 40px); line-height: 1.6; }
+.home-about .home-center-cta { margin-top: 40px; }
+.home-services { padding-bottom: 64px; }
+.service-grid { grid-template-columns: 394fr 439fr 335fr; gap: 24px; align-items: start; min-height: 530px; }
+.service-card { min-height: 0; border-radius: 7px; }
+.service-card:nth-child(1) { height: 470px; margin-top: 30px; }
+.service-card:nth-child(2) { height: 530px; }
+.service-card:nth-child(3) { height: 432px; margin-top: 49px; }
+.service-card img { height: auto; min-height: 0; width: 100%; object-fit: contain; }
+.service-info { padding: 18px 22px 24px; }
+.service-info h3 { font-size: clamp(14px, 1.55vw, 20px); line-height: 1.3; }
+.service-info p { font-size: clamp(11px, 1.1vw, 14px); line-height: 1.6; }
+.home-cases { padding-bottom: 64px; }
+.home-heading-row { align-items: flex-start; }
+.home-heading-row > a { align-self: end; margin-bottom: 20px; }
+.case-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; height: 670px; align-items: center; }
+.case-card,.case-card-1,.case-card-2 { width: 100%; min-height: 0; height: auto; aspect-ratio: auto; background: none; border: none; border-radius: 7px; transform: none; overflow: hidden; }
+.case-card-0 { height: 335px; }
+.case-card-1 { height: 668px; }
+.case-card-2 { height: 364px; }
+.case-card img { width: 100%; height: 100%; flex: 0 0 100%; object-fit: fill; }
+.case-card:hover,.case-card-1:hover,.case-card-2:hover { transform: translateY(-5px); }
+.home-works { padding-bottom: 64px; }
+.home-works-title { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 173px; gap: 0; margin: 0; font: 400 clamp(50px, 7.4vw, 94px)/.86 Orbitron,sans-serif; letter-spacing: .01em; text-shadow: 0 0 45px #683fbe; }
+.home-works-title span:first-child { color: #fff; font-family: Orbitron,sans-serif; font-weight: 900; }
+.home-works-title span:last-child { color: #8260c9; font-family: Cinzel,serif; font-weight: 400; }
+.works-grid { margin-top: 80px; grid-template-columns: 266fr 512fr 384fr; grid-template-rows: 460px 242px; gap: 36px 24px; }
+.work-tile { background: transparent; border: none; border-radius: 7px; }
+.work-tile img { object-fit: fill; }
+.work-tile-0 { grid-column: 1; grid-row: 1; height: 367px; align-self: center; }
+.work-tile-1 { grid-column: 2; grid-row: 1; height: 460px; }
+.work-tile-2 { grid-column: 3; grid-row: 1; height: 367px; align-self: center; }
+.work-tile-3 { grid-column: 1; grid-row: 2; height: 146px; align-self: center; }
+.work-tile-4 { grid-column: 2; grid-row: 2; height: 241px; }
+.works-cta { grid-column: 3; grid-row: 2; align-self: center; justify-self: center; }
+.home-capabilities { padding-bottom: 64px; }
+.home-capabilities .home-statement { font-size: clamp(22px, 3.125vw, 40px); line-height: 1.6; }
+.capabilities-content { margin-top: 64px; }
+.home-contact { max-width: none; min-height: 524px; padding: 0 max(32px, calc((100vw - 1216px) / 2)); background: radial-gradient(ellipse at 60% 95%,#261139,transparent 55%) #000; }
+.home-contact .home-section-heading { max-width: 1216px; margin: auto; }
+.contact-eyebrow { margin-top: 32px; font-family: Cinzel,serif; }
+.contact-mail { font-size: clamp(19px,4.4vw,56px); }
+.home-footer { display: flex; flex-direction: column; align-items: center; padding: 0 32px 32px; border: none; min-height: 0; gap: 24px; }
+.home-footer > img { width: min(100%,1216px); height: auto; max-height: 210px; object-fit: contain; }
+.footer-bottom { display: flex; align-items: center; flex-direction: column; gap: 12px; }
+.footer-socials { display: flex; justify-content: center; gap: 24px; color: var(--home-violet); font-family: Inter,sans-serif; font-size: 17px; font-weight: 700; }
+.home-footer p { text-align: center; font-size: 10px; }
+
+@media (max-width: 900px) {
+  .home-header { height: 70px; padding-inline:16px; }
+  .home-hero { height: 750px; min-height: 750px; }
+  .hero-content { height: 750px; padding: 108px 16px 60px; }
+  .service-grid { min-height: 0; }
+  .service-card:nth-child(1) { height: 330px; margin-top: 22px; }
+  .service-card:nth-child(2) { height: 380px; }
+  .service-card:nth-child(3) { height: 315px; margin-top: 32px; }
+  .case-grid { height: 510px; }
+  .case-card-0 { height: 255px; }
+  .case-card-1 { height: 490px; }
+  .case-card-2 { height: 275px; }
+  .works-grid { grid-template-rows: 310px 175px; gap: 20px 14px; }
+  .work-tile-0,.work-tile-2 { height: 245px; }
+  .work-tile-1 { height: 310px; }
+  .work-tile-3 { height: 107px; }
+  .work-tile-4 { height: 175px; }
+  .home-contact { padding-inline:16px; min-height:420px; }
+}
+@media (max-width: 620px) {
+  .home-header { justify-content: space-between; height: 82px; }
+  .home-logo { width: 124px; }
+  .home-nav { display: flex; gap: 10px; min-width: 0; overflow: hidden; margin-left: 0; }
+  .home-nav a { font-size: 9px; }
+  .home-nav a:nth-child(n+3) { display: none; }
+  .home-hero { height: 700px; min-height: 700px; }
+  .hero-content { height: 700px; min-height: 0; padding: 115px 16px 55px; }
+  .hero-headline { gap: 12px; }
+  .hero-headline h1 span { font-size: clamp(47px,calc(8.51vw + 28px),65px); margin-bottom: -5px; }
+  .hero-headline h1 em { font-size: clamp(48px,calc(9.06vw + 29px),70px); }
+  .hero-eyebrow { font-size: 12px; letter-spacing: .45em; }
+  .hero-note { max-width: 190px; font-size: 12px; }
+  .hero-note-right { max-width: 165px; font-size: 11px; }
+  .hero-cta { height: 49px; font-size: 11px; padding-inline: 20px; }
+  .home-section-heading { min-height: 80px; padding: 24px 0; }
+  .home-statement,.home-about .home-statement,.home-capabilities .home-statement { font-size: clamp(24px,7vw,30px); line-height: 1.55; }
+  .home-services { padding-bottom: 64px; }
+  .service-grid { display: flex; flex-direction: column; gap: 24px; align-items: stretch; }
+  .service-card:nth-child(1),.service-card:nth-child(2),.service-card:nth-child(3) { height: auto; min-height: 0; margin-top: 0; width: 100%; }
+  .service-card img { max-height: 270px; object-fit: cover; }
+  .service-info { padding: 20px 18px 26px; }
+  .service-info h3 { font-size: 20px; }
+  .service-info p { font-size: 15px; }
+  .home-cases { padding-bottom: 64px; }
+  .case-grid { display: flex; flex-direction: column; height: auto; gap: 24px; }
+  .case-card,.case-card-0,.case-card-1,.case-card-2 { height: auto; width: 100%; }
+  .case-card img { height: auto; object-fit: contain; }
+  .home-works { display: flex; flex-direction: column; }
+  .home-works-title { order: -1; font-size: clamp(55px,16vw,72px); height: auto; padding: 32px 0; }
+  .home-works .home-section-heading { order: 0; }
+  .works-grid { order: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto; gap: 24px 12px; margin-top: 0; }
+  .work-tile-0,.work-tile-1,.work-tile-2 { height: auto; width: 100%; grid-column: 1 / -1; grid-row: auto; }
+  .work-tile-3,.work-tile-4 { height: auto; width: 100%; grid-row: auto; align-self: start; }
+  .work-tile-3 { grid-column:1; }
+  .work-tile-4 { grid-column:2; }
+  .work-tile img { width: 100%; height: auto; object-fit: contain; }
+  .works-cta { grid-column:1 / -1; grid-row:auto; margin-top: 0; }
+  .capabilities-grid { grid-template-columns: 1fr 1fr; gap: 32px 22px; }
+  .home-contact { min-height: 350px; padding-inline:16px; }
+  .home-footer { padding: 0 16px 32px; }
+}
