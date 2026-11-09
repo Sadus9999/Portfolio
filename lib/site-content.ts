@@ -47,7 +47,7 @@ export const defaultSiteContent: SiteContent = {
     introEnabled: false,
   },
   about: {
-    statement: "Product designer with over 5 years of experience in UX/UI and over 15 years in digital design. Specializes in improving the usability, clarity, and conversion of web and mobile products, especially in projects with limited time and budget.",
+    statement: "Product designer with over 6 years of experience in UX/UI and over 15 years in digital design. Specializes in improving the usability, clarity, and conversion of web and mobile products, especially in projects with limited time and budget.",
     cta: "More about me",
   },
   services: [
