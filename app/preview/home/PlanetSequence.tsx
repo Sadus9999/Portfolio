@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useContext, useEffect, useRef, useState } from "react"
+import { HomeIntroContext } from "./HomeExperience"
 
 type Props = {
   base: string
@@ -15,6 +16,17 @@ export default function PlanetSequence({ base, first, last, autoplayEnd }: Props
   const region = useRef<HTMLDivElement>(null)
   const output = useRef<HTMLImageElement>(null)
   const [ready, setReady] = useState(false)
+  const intro = useContext(HomeIntroContext)
+  const isPaused = intro?.paused ?? false
+  const onProgress = intro?.onProgress
+  const onInitialReady = intro?.onReady
+  const paused = useRef(isPaused)
+  const resume = useRef<() => void>(() => {})
+
+  useEffect(() => {
+    paused.current = isPaused
+    if (!isPaused) resume.current()
+  }, [isPaused])
 
   useEffect(() => {
     const img = output.current
@@ -22,15 +34,21 @@ export default function PlanetSequence({ base, first, last, autoplayEnd }: Props
     if (!img || !section) return
 
     const url = (n: number) => base.replace(/\/?$/, "/") + n + ".webp"
-    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches
-    if (reducedMotion) {
+    const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)")
+    if (img.complete && !img.naturalWidth) img.style.visibility = "hidden"
+    if (reducedMotion.matches) {
       img.src = url(first)
       setReady(true)
+      onProgress?.(100)
+      onInitialReady?.()
       return
     }
 
     const cache = new Map<number, HTMLImageElement>()
     const pending = new Set<number>()
+    const failed = new Set<number>()
+    const settled = new Set<number>()
+    const initialCount = autoplayEnd - first + 1
     const queue: number[] = []
     let active = 0
     let disposed = false
@@ -38,13 +56,12 @@ export default function PlanetSequence({ base, first, last, autoplayEnd }: Props
     let current = first
     let frameRaf = 0
     let start = 0
-    let elapsedFrames = 0
     let wanted = first
 
     const display = (n: number) => {
       const item = cache.get(n)
       if (!item || !item.complete || !item.naturalWidth || !output.current) return false
-      if (n !== current || !output.current.src) {
+      if (n !== current || !output.current.src || !output.current.naturalWidth) {
         output.current.src = item.src
         current = n
       }
@@ -52,7 +69,7 @@ export default function PlanetSequence({ base, first, last, autoplayEnd }: Props
     }
 
     const enqueue = (n: number, urgent = false) => {
-      if (n < first || n > last || cache.has(n) || pending.has(n) || queue.includes(n)) return
+      if (n < first || n > last || cache.has(n) || pending.has(n) || failed.has(n) || queue.includes(n)) return
       if (urgent) queue.unshift(n)
       else queue.push(n)
       pump()
@@ -75,15 +92,17 @@ export default function PlanetSequence({ base, first, last, autoplayEnd }: Props
             if (n === first && phase === "buffer") display(first)
             if (phase === "scroll" && n === wanted) display(n)
           } else {
+            failed.add(n)
             console.warn("Missing animation frame", n)
           }
-          const loadedIntro = Array.from({ length: autoplayEnd - first + 1 }, (_, i) => first + i)
-            .every(i => cache.has(i))
-          if (phase === "buffer" && loadedIntro) {
-            phase = "play"
-            setReady(true)
-            start = performance.now()
-            frameRaf = requestAnimationFrame(tick)
+          if (n <= autoplayEnd) {
+            settled.add(n)
+            onProgress?.(settled.size / initialCount * 100)
+            if (settled.size === initialCount) {
+              setReady(true)
+              onInitialReady?.()
+              startPlayback()
+            }
           }
           pump()
         }
@@ -93,15 +112,28 @@ export default function PlanetSequence({ base, first, last, autoplayEnd }: Props
       }
     }
 
+    function startPlayback() {
+      if (disposed || phase !== "buffer" || settled.size < initialCount || paused.current) return
+      if (reducedMotion.matches || cache.size === 0) {
+        phase = "scroll"
+        return
+      }
+      phase = "play"
+      start = performance.now()
+      frameRaf = requestAnimationFrame(tick)
+    }
+    resume.current = startPlayback
+
     function tick(time: number) {
       if (disposed || phase !== "play") return
-      const target = clamp(first + Math.floor((time - start) * 0.03), first, autoplayEnd)
-      if (!display(target)) {
-        enqueue(target, true)
-        start = time - (current - first) / 0.03
+      if (reducedMotion.matches) {
+        phase = "scroll"
+        return
       }
+      const target = clamp(first + Math.floor((time - start) * 0.03), first, autoplayEnd)
+      if (!display(target)) enqueue(target, true)
       for (let i = current + 1; i <= Math.min(last, current + 12); i++) enqueue(i)
-      if (current >= autoplayEnd) {
+      if (target >= autoplayEnd) {
         phase = "scroll"
         update()
         return
@@ -110,7 +142,7 @@ export default function PlanetSequence({ base, first, last, autoplayEnd }: Props
     }
 
     function update() {
-      if (phase !== "scroll" || disposed || !region.current) return
+      if (phase !== "scroll" || disposed || reducedMotion.matches || !region.current) return
       const rect = region.current.getBoundingClientRect()
       // The visual hero matches the Figma artboard height; scrub across
       // the following viewport rather than adding an empty 260vh section.
@@ -134,18 +166,21 @@ export default function PlanetSequence({ base, first, last, autoplayEnd }: Props
     window.addEventListener("resize", update)
     return () => {
       disposed = true
+      resume.current = () => {}
       cancelAnimationFrame(frameRaf)
       window.removeEventListener("scroll", update)
       window.removeEventListener("resize", update)
       cache.clear()
       queue.length = 0
     }
-  }, [base, first, last, autoplayEnd])
+  }, [base, first, last, autoplayEnd, onProgress, onInitialReady])
 
   return (
     <div ref={region} className="planet-scroll" aria-hidden="true">
       <div className="planet-sticky">
-        <img ref={output} src={base.replace(/\/?$/, "/") + first + ".webp"} alt="" draggable={false} />
+        <img ref={output} src={base.replace(/\/?$/, "/") + first + ".webp"} alt="" draggable={false}
+          onError={event => { event.currentTarget.style.visibility = "hidden" }}
+          onLoad={event => { event.currentTarget.style.visibility = "visible" }} />
         <div className="planet-vignette" />
         {!ready && <span className="sr-only">Preparing animation</span>}
       </div>

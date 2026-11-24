@@ -16,6 +16,81 @@
   font-family: "Inter", sans-serif;
   isolation: isolate;
 }
+
+/* First-visit intro shares the real logo and waits for the Hero's initial frames. */
+.home-experience { min-height: 100svh; background: #000; }
+.home-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  isolation: isolate;
+  color: var(--dng-text);
+  font-family: "Inter", sans-serif;
+}
+.home-intro-backdrop { position: absolute; inset: 0; z-index: -1; background: #000; }
+.home-intro-scene { position: absolute; inset: 0; overflow: hidden; perspective: 900px; perspective-origin: 50% 50%; }
+.home-intro-logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 174px;
+  height: 26px;
+  transform: translate(-50%, -50%);
+  transform-style: preserve-3d;
+}
+.home-intro-logo-plane { width: 174px; height: 26px; animation: home-intro-logo-appear 600ms ease-out both; }
+.home-intro-logo-plane > svg { display: block; }
+.home-intro-progress {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 125px);
+  width: min(212px, calc(100vw - 64px));
+  transform: translateX(-50%);
+  color: var(--dng-accent);
+  text-align: center;
+  font: 400 16px/1.6 "Inter", sans-serif;
+  transition: opacity 280ms ease, translate 280ms ease;
+}
+.home-intro-track { height: 1px; margin-top: 3px; background: rgb(104 63 190 / .2); overflow: hidden; }
+.home-intro-track > div { height: 100%; background: var(--dng-accent); transform-origin: left; transition: transform 180ms ease-out; }
+.home-intro .home-intro-skip {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  min-height: 40px;
+  padding: 0 20px;
+  font-size: 11px;
+  border-color: var(--dng-accent);
+  color: var(--dng-card-title);
+}
+.home-intro-skip:focus-visible { outline: 2px solid var(--dng-focus); outline-offset: 5px; }
+.home-intro[data-phase="flying"] .home-intro-logo-plane { will-change: transform; }
+.home-intro[data-phase="flying"] .home-intro-progress { opacity: 0; translate: 0 12px; }
+.home-intro[data-phase="flying"] .home-intro-backdrop {
+  animation: home-intro-background-exit calc(var(--intro-flight-duration) * .25) ease-out calc(var(--intro-flight-duration) * .75) both;
+}
+@keyframes home-intro-logo-appear { from { opacity: 0; } to { opacity: 1; } }
+@keyframes home-intro-background-exit { from { opacity: 1; } to { opacity: 0; } }
+@keyframes homepage-ui-enter {
+  from { opacity: 0; transform: translate3d(0,24px,0); filter: blur(8px); }
+  to { opacity: 1; transform: none; filter: blur(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .home-experience:is([data-intro-phase="loading"], [data-intro-phase="flying"])
+    :is(.home-header, .hero-note, .hero-eyebrow, .hero-headline h1 > span, .hero-headline h1 > em, .hero-cta) { opacity: 0; }
+  .home-experience[data-intro-phase="revealing"]
+    :is(.home-header, .hero-note, .hero-eyebrow, .hero-headline h1 > span, .hero-headline h1 > em, .hero-cta) {
+    animation: homepage-ui-enter 700ms cubic-bezier(.22,1,.36,1) both;
+  }
+  .home-experience[data-intro-phase="revealing"] .hero-note-left { animation-delay: 80ms; }
+  .home-experience[data-intro-phase="revealing"] .hero-note-right { animation-delay: 160ms; }
+  .home-experience[data-intro-phase="revealing"] .hero-eyebrow { animation-delay: 240ms; }
+  .home-experience[data-intro-phase="revealing"] .hero-headline h1 > span { animation-delay: 320ms; }
+  .home-experience[data-intro-phase="revealing"] .hero-headline h1 > em { animation-delay: 400ms; }
+  .home-experience[data-intro-phase="revealing"] .hero-cta { animation-delay: 520ms; }
+}
+@media (prefers-reduced-motion: reduce) { .home-intro { display: none; } }
+@media (max-height: 540px) { .home-intro-progress { top: calc(50% + 70px); } }
 .demigod-home, .demigod-home *, .demigod-home *::before, .demigod-home *::after { box-sizing: border-box; }
 .demigod-home img { display: block; max-width: 100%; }
 .demigod-home a { color: inherit; text-decoration: none; }

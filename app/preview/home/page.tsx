@@ -1,10 +1,13 @@
 import type { Metadata } from "next"
+import { cookies } from "next/headers"
 import Link from "next/link"
 import { loadGallery } from "@/lib/r2"
 import { loadSiteContent } from "@/lib/site-content"
 import PlanetSequence from "./PlanetSequence"
 import MobileMenu from "./MobileMenu"
 import MediaCard from "./MediaCard"
+import HomeExperience from "./HomeExperience"
+import { INTRO_SESSION_COOKIE, INTRO_SESSION_VALUE } from "./intro-session"
 import "./design.css"
 import "./home.css"
 
@@ -42,7 +45,9 @@ export default async function PreviewHomePage() {
   ]
   const works = content.featuredWorkIds.length ? selected : originalFigmaWorks
   const h = content.hero
-  return (
+  const session = await cookies()
+  const introEnabled = h.introEnabled && session.get(INTRO_SESSION_COOKIE)?.value !== INTRO_SESSION_VALUE
+  return <HomeExperience introEnabled={introEnabled}>
     <main className="demigod-home">
       <header className="home-header">
         <Link href="/preview/home" className="home-logo" aria-label="DEMIGOD homepage">
@@ -154,5 +159,5 @@ export default async function PreviewHomePage() {
         </div>
       </footer>
     </main>
-  )
+  </HomeExperience>
 }

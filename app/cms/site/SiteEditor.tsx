@@ -112,12 +112,12 @@ export default function SiteEditor() {
         </section>
         <section className="site-card">
           <h2>Hero animation</h2>
-          <p className="site-muted">Klatki WebP w Cloudflare R2. Włączenie animacji logo będzie aktywne po jej wdrożeniu.</p>
+          <p className="site-muted">Klatki WebP w Cloudflare R2. Intro przygotowuje animację planety i pokazuje się raz na sesję przeglądarki.</p>
           {field("Sequence base URL",content.hero.sequenceBase,v=>patch({hero:{...content.hero,sequenceBase:v}}))}
           <div className="site-grid">
             {(["firstFrame","autoplayEnd","lastFrame"] as const).map(k => field(k,String(content.hero[k]),v=>patch({hero:{...content.hero,[k]:Number(v)}})))}
           </div>
-          <label className="site-check"><input type="checkbox" checked={content.hero.introEnabled} onChange={e=>patch({hero:{...content.hero,introEnabled:e.target.checked}})}/> Enable vector logo intro (future feature)</label>
+          <label className="site-check"><input type="checkbox" checked={content.hero.introEnabled} onChange={e=>patch({hero:{...content.hero,introEnabled:e.target.checked}})}/> Włącz intro przy pierwszym wejściu w sesji przeglądarki</label>
         </section>
       </div>}
 
