@@ -5,6 +5,7 @@ import { loadSiteContent } from "@/lib/site-content"
 import PlanetSequence from "./PlanetSequence"
 import MobileMenu from "./MobileMenu"
 import MediaCard from "./MediaCard"
+import "./design.css"
 import "./home.css"
 
 export const dynamic = "force-dynamic"

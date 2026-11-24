@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1" preserveAspectRatio="none">
+  <defs>
+    <!-- Intermediate stops preserve Figma's straight-alpha interpolation. -->
+    <radialGradient id="stroke-paint" gradientUnits="userSpaceOnUse" cx=".5" cy=".5" r=".5">
+      <stop stop-color="white" stop-opacity=".48"/>
+      <stop offset=".125" stop-color="#dfdfdf" stop-opacity=".42"/>
+      <stop offset=".25" stop-color="#bfbfbf" stop-opacity=".36"/>
+      <stop offset=".375" stop-color="#9f9f9f" stop-opacity=".30"/>
+      <stop offset=".5" stop-color="#808080" stop-opacity=".24"/>
+      <stop offset=".625" stop-color="#606060" stop-opacity=".18"/>
+      <stop offset=".75" stop-color="#404040" stop-opacity=".12"/>
+      <stop offset=".875" stop-color="#202020" stop-opacity=".06"/>
+      <stop offset="1" stop-color="black" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Inverse of the stroke paint transforms in Figma component 1500:2120. -->
+    <radialGradient id="left-edge" href="#stroke-paint"
+      gradientTransform="matrix(3.006211381 .522466499 -.522466669 1.429119771 -1.221686016 -.364464393)"/>
+    <radialGradient id="top-edge" href="#stroke-paint"
+      gradientTransform="matrix(1.046583856 1.745124005 -1.745124005 .497534355 1.349270126 -1.121329195)"/>
+  </defs>
+  <path fill="black" d="M0 0H1V1H0Z"/>
+  <path fill="url(#left-edge)" d="M0 0H1V1H0Z"/>
+  <path fill="url(#top-edge)" d="M0 0H1V1H0Z"/>
+</svg>
