@@ -82,10 +82,10 @@ export default function IntroLogo({ flying, onReady, onFlightComplete }: Props) 
 
     const transform = (depth: number) => `translateZ(${depth}px) scale(${scale})`
     animation = element.animate([
-      { transform: transform(0), offset: 0 },
-      { transform: transform(120), offset: .3 },
-      { transform: transform(650), offset: .75 },
-      { transform: transform(CAMERA_DEPTH * 1.08), offset: 1 },
+      { transform: transform(0), opacity: 1, offset: 0 },
+      { transform: transform(120), opacity: 1, offset: .3 },
+      { transform: transform(650), opacity: 0, offset: .75 },
+      { transform: transform(CAMERA_DEPTH * 1.08), opacity: 0, offset: 1 },
     ], {
       duration: INTRO_FLIGHT_MS,
       easing: "cubic-bezier(.55, .05, .8, .45)",
