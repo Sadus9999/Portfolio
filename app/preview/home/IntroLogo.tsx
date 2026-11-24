@@ -13,17 +13,15 @@ type Props = {
 
 export default function IntroLogo({ flying, onReady, onFlightComplete }: Props) {
   const plane = useRef<HTMLDivElement>(null)
-  const geometry = useRef({ width: 174, height: 26, gap: 87 })
+  const geometry = useRef({ width: 174, height: 26 })
   const available = useRef(false)
 
   const placeLogo = useCallback(() => {
     const element = plane.current
     if (!element) return 1
-    const { width, height, gap } = geometry.current
+    const { width, height } = geometry.current
     const scale = Math.min(520, window.innerWidth * .72) / width
-    // Align the letter gap before the flight, then move only along the camera's Z axis.
-    if (element.parentElement) element.parentElement.style.marginLeft = `${width / 2 - gap}px`
-    element.style.transformOrigin = `${gap}px ${height / 2}px`
+    element.style.transformOrigin = `${width / 2}px ${height / 2}px`
     element.style.transform = `translateZ(0) scale(${scale})`
     return scale
   }, [])
@@ -48,22 +46,7 @@ export default function IntroLogo({ flying, onReady, onFlightComplete }: Props) 
         plane.current.replaceChildren(svg)
 
         const viewBox = svg.viewBox.baseVal
-        const boxes = Array.from(svg.querySelectorAll("path"))
-          .map(path => path.getBBox())
-          .sort((left, right) => left.x - right.x)
-        const letters: Array<{ left: number; right: number }> = []
-        for (const box of boxes) {
-          const previous = letters.at(-1)
-          if (previous && box.x <= previous.right) {
-            previous.right = Math.max(previous.right, box.x + box.width)
-          } else {
-            letters.push({ left: box.x, right: box.x + box.width })
-          }
-        }
-        const center = viewBox.x + viewBox.width / 2
-        const gaps = letters.slice(1).map((letter, index) => (letters[index].right + letter.left) / 2)
-        gaps.sort((left, right) => Math.abs(left - center) - Math.abs(right - center))
-        geometry.current = { width: viewBox.width, height: viewBox.height, gap: gaps[0] ?? center }
+        geometry.current = { width: viewBox.width, height: viewBox.height }
         placeLogo()
         available.current = true
       } catch {
