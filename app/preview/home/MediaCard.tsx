@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ChevronRightIcon } from "@heroicons/react/20/solid"
 import { useId } from "react"
+import type { RevealOptions } from "./useHomeReveal"
 
 export type MediaCardVariant = "case" | "portfolio"
 
@@ -12,9 +13,10 @@ type Props = {
   title: string
   description?: string
   external?: boolean
+  reveal?: RevealOptions
 }
 
-export default function MediaCard({ variant, className = "", href, image, title, description, external = false }: Props) {
+export default function MediaCard({ variant, className = "", href, image, title, description, external = false, reveal }: Props) {
   const id = useId()
   const titleId = `${id}-title`
   const descriptionId = description ? `${id}-description` : undefined
@@ -23,6 +25,9 @@ export default function MediaCard({ variant, className = "", href, image, title,
     className: `media-frame media-card media-card--${variant} ${className}`.trim(),
     "aria-labelledby": titleId,
     "aria-describedby": descriptionId,
+    "data-reveal": reveal ? "frame" : undefined,
+    "data-reveal-from": reveal?.from,
+    "data-reveal-order": reveal?.order,
   }
   const body = (
     <>

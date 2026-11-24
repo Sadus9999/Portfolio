@@ -4,6 +4,7 @@ import { createContext, useCallback, useEffect, useMemo, useRef, useState } from
 import type { CSSProperties, ReactNode } from "react"
 import IntroLogo, { INTRO_FLIGHT_MS } from "./IntroLogo"
 import { INTRO_SESSION_COOKIE, INTRO_SESSION_VALUE } from "./intro-session"
+import { useHomeReveal } from "./useHomeReveal"
 
 type IntroPhase = "checking" | "loading" | "flying" | "intro" | "revealing" | "ready"
 
@@ -68,6 +69,7 @@ export default function HomeExperience({ introEnabled, children }: { introEnable
     if (introEnabled) setAssetsReady(true)
   }, [introEnabled])
   const controls = useMemo(() => ({ playback, onProgress, onReady, onIntroComplete }), [playback, onProgress, onReady, onIntroComplete])
+  useHomeReveal(content, !visible)
 
   useEffect(() => {
     if (!introEnabled || (!started.current && hasSeenIntro())) {

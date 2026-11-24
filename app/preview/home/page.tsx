@@ -28,7 +28,7 @@ function HighlightedStatement({ value }: { value: string }) {
 }
 
 function Heading({ children }: { children: React.ReactNode }) {
-  return <div className="home-section-heading"><h2>{children}</h2><div className="home-divider" /></div>
+  return <div className="home-section-heading"><h2 data-reveal="text">{children}</h2><div className="home-divider" data-reveal="line" data-reveal-order={1} /></div>
 }
 
 export default async function PreviewHomePage() {
@@ -77,15 +77,15 @@ export default async function PreviewHomePage() {
 
       <section className="home-section home-about" id="about">
         <Heading>About me</Heading>
-        <p className="home-statement"><HighlightedStatement value={content.about.statement}/></p>
-        <Link href="/about" className="home-pill home-center-cta">{content.about.cta}</Link>
+        <p className="home-statement" data-reveal="text"><HighlightedStatement value={content.about.statement}/></p>
+        <Link href="/about" className="home-pill home-center-cta" data-reveal="text" data-reveal-order={1}>{content.about.cta}</Link>
       </section>
 
       <section className="home-section home-services">
         <Heading>What I do?</Heading>
         <div className="service-grid">
-          {content.services.map(service => (
-            <article className="service-card media-frame" key={service.id}>
+          {content.services.map((service, i) => (
+            <article className="service-card media-frame" key={service.id} data-reveal="frame" data-reveal-from={(["left", "bottom", "right"] as const)[i % 3]} data-reveal-order={i % 3}>
               {service.image && <img src={service.image} alt="" />}
               <div className="service-info">
                 <h3>{service.title}</h3><p>{service.description}</p>
@@ -96,7 +96,7 @@ export default async function PreviewHomePage() {
       </section>
 
       <section className="home-section home-cases" id="case-studies">
-        <div className="home-heading-row"><Heading>Case Studies</Heading><Link href="/case-studies">See more ›</Link></div>
+        <div className="home-heading-row"><Heading>Case Studies</Heading><Link href="/case-studies" data-reveal="text" data-reveal-order={1}>See more ›</Link></div>
         <div className="case-grid">
           {content.caseStudies.map((item, i) => (
             <MediaCard
@@ -107,6 +107,7 @@ export default async function PreviewHomePage() {
               image={item.image}
               title={item.title}
               description={item.description}
+              reveal={{ from: (["left", "top", "right"] as const)[i % 3], order: i % 3 }}
             />
           ))}
         </div>
@@ -114,7 +115,7 @@ export default async function PreviewHomePage() {
 
       <section className="home-section home-works" id="portfolio">
         <Heading>Portfolio</Heading>
-        <h2 className="home-works-title"><span>BEST</span><span>WORKS</span></h2>
+        <h2 className="home-works-title"><span data-reveal="text">BEST</span><span data-reveal="text" data-reveal-order={1}>WORKS</span></h2>
         <div className="works-grid">
           {works.slice(0,5).map((item, i) => (
             <MediaCard
@@ -125,35 +126,36 @@ export default async function PreviewHomePage() {
               image={item.thumbnail || item.full}
               title={item.title || item.client}
               description={item.client}
+              reveal={{ from: (["left", "bottom", "right", "right", "left"] as const)[i], order: i % 3 }}
               external
             />
           ))}
-          <Link href="/portfolio" className="home-pill works-cta">SEE ALL WORKS</Link>
+          <Link href="/portfolio" className="home-pill works-cta" data-reveal="text" data-reveal-order={2}>SEE ALL WORKS</Link>
         </div>
       </section>
 
       <section className="home-section home-capabilities">
-        <p className="home-statement"><HighlightedStatement value={content.capabilities.statement}/></p>
+        <p className="home-statement" data-reveal="text"><HighlightedStatement value={content.capabilities.statement}/></p>
         <div className="capabilities-content">
           <div className="capabilities-grid">
-            {content.capabilities.columns.map(col => (
-              <div key={col.title}><h3>{col.title}</h3>
+            {content.capabilities.columns.map((col, i) => (
+              <div key={col.title} data-reveal="text" data-reveal-order={i}><h3>{col.title}</h3>
                 {col.items.map(item => <p key={item}>{item}</p>)}
               </div>
             ))}
           </div>
-          {content.capabilities.cvUrl && <a className="home-pill" href={content.capabilities.cvUrl}>Download CV</a>}
+          {content.capabilities.cvUrl && <a className="home-pill" href={content.capabilities.cvUrl} data-reveal="text">Download CV</a>}
         </div>
       </section>
 
       <section className="home-section home-contact" id="contact">
         <Heading>Contact me</Heading>
-        <p className="contact-eyebrow">{content.contact.eyebrow}</p>
-        <a className="contact-mail" href={"mailto:"+content.contact.email}>{content.contact.email}</a>
+        <p className="contact-eyebrow" data-reveal="text">{content.contact.eyebrow}</p>
+        <a className="contact-mail" href={"mailto:"+content.contact.email} data-reveal="text" data-reveal-order={1}>{content.contact.email}</a>
       </section>
       <footer className="home-footer">
-        <img src="/home/demigod-wordmark.svg" alt="DEMIGOD" />
-        <div className="footer-bottom">
+        <img src="/home/demigod-wordmark.svg" alt="DEMIGOD" data-reveal="text" />
+        <div className="footer-bottom" data-reveal="text" data-reveal-order={1}>
           <div className="footer-socials"><a href="https://www.linkedin.com/in/michal-okon/" target="_blank" rel="noopener noreferrer">in</a><a href="https://dribbble.com/Michal_Okon" target="_blank" rel="noopener noreferrer">◉</a><a href="https://www.behance.net/michalokon" target="_blank" rel="noopener noreferrer">Bē</a></div>
           <p>© {new Date().getFullYear()} DEMIGOD. All rights reserved.</p>
         </div>

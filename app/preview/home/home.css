@@ -19,6 +19,24 @@
 
 /* First-visit intro shares the real logo and waits for the Hero's initial frames. */
 .home-experience { min-height: 100svh; background: #000; }
+.home-content { overflow-x: clip; }
+/* Reveal motion is opt-in after hydration; the server and no-JS page stay visible. */
+.demigod-home [data-reveal] { --home-reveal-x: 0px; --home-reveal-y: 18px; }
+.demigod-home [data-reveal="frame"] { --home-reveal-distance: 48px; --home-reveal-y: var(--home-reveal-distance); }
+.demigod-home [data-reveal-from="left"] { --home-reveal-x: calc(-1 * var(--home-reveal-distance)); --home-reveal-y: 0px; }
+.demigod-home [data-reveal-from="right"] { --home-reveal-x: var(--home-reveal-distance); --home-reveal-y: 0px; }
+.demigod-home [data-reveal-from="top"] { --home-reveal-y: calc(-1 * var(--home-reveal-distance)); }
+.demigod-home [data-reveal="line"] { transform-origin: left center; }
+.home-works [data-reveal="line"] { transform-origin: center; }
+[data-home-motion="enabled"] [data-reveal-state="pending"] {
+  opacity: 0;
+  translate: var(--home-reveal-x) var(--home-reveal-y);
+}
+[data-home-motion="enabled"] [data-reveal="line"][data-reveal-state="pending"] { translate: none; scale: 0 1; }
+@media (max-width: 620px) { .demigod-home [data-reveal="frame"] { --home-reveal-distance: 24px; } }
+@media (prefers-reduced-motion: reduce), print {
+  .demigod-home [data-reveal] { opacity: 1 !important; translate: none !important; scale: none !important; }
+}
 .home-intro {
   position: fixed;
   inset: 0;
