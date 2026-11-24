@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef } from "react"
 
 export const INTRO_FLIGHT_MS = 1600
 const CAMERA_DEPTH = 900
@@ -15,6 +15,18 @@ export default function IntroLogo({ flying, onReady, onFlightComplete }: Props) 
   const plane = useRef<HTMLDivElement>(null)
   const geometry = useRef({ width: 174, height: 26, gap: 87 })
   const available = useRef(false)
+
+  const placeLogo = useCallback(() => {
+    const element = plane.current
+    if (!element) return 1
+    const { width, height, gap } = geometry.current
+    const scale = Math.min(520, window.innerWidth * .72) / width
+    // Align the letter gap before the flight, then move only along the camera's Z axis.
+    if (element.parentElement) element.parentElement.style.marginLeft = `${width / 2 - gap}px`
+    element.style.transformOrigin = `${gap}px ${height / 2}px`
+    element.style.transform = `translateZ(0) scale(${scale})`
+    return scale
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -52,6 +64,7 @@ export default function IntroLogo({ flying, onReady, onFlightComplete }: Props) 
         const gaps = letters.slice(1).map((letter, index) => (letters[index].right + letter.left) / 2)
         gaps.sort((left, right) => Math.abs(left - center) - Math.abs(right - center))
         geometry.current = { width: viewBox.width, height: viewBox.height, gap: gaps[0] ?? center }
+        placeLogo()
         available.current = true
       } catch {
         // A failed decorative asset must not prevent the homepage from opening.
@@ -67,23 +80,14 @@ export default function IntroLogo({ flying, onReady, onFlightComplete }: Props) 
       controller.abort()
       window.clearTimeout(timeout)
     }
-  }, [onReady])
+  }, [onReady, placeLogo])
 
   useEffect(() => {
     const element = plane.current
     if (!element) return
     let animation: Animation | undefined
 
-    const placeLogo = () => {
-      const { width, height, gap } = geometry.current
-      const scale = Math.min(520, window.innerWidth * .72) / width
-      const offset = (scale - 1) * (gap - width / 2)
-      element.style.transformOrigin = `${gap}px ${height / 2}px`
-      element.style.transform = `translate3d(${offset}px, 0, 0) scale(${scale})`
-      return { width, scale, offset, gap }
-    }
-
-    const initial = placeLogo()
+    const scale = placeLogo()
     if (!flying) {
       window.addEventListener("resize", placeLogo)
       return () => window.removeEventListener("resize", placeLogo)
@@ -93,14 +97,12 @@ export default function IntroLogo({ flying, onReady, onFlightComplete }: Props) 
       return
     }
 
-    const target = initial.width / 2 - initial.gap
-    const transform = (offset: number, depth: number) =>
-      `translate3d(${offset}px, 0, ${depth}px) scale(${initial.scale})`
+    const transform = (depth: number) => `translateZ(${depth}px) scale(${scale})`
     animation = element.animate([
-      { transform: transform(initial.offset, 0), offset: 0 },
-      { transform: transform(target, 120), offset: .3 },
-      { transform: transform(target, 650), offset: .75 },
-      { transform: transform(target, CAMERA_DEPTH * 1.08), offset: 1 },
+      { transform: transform(0), offset: 0 },
+      { transform: transform(120), offset: .3 },
+      { transform: transform(650), offset: .75 },
+      { transform: transform(CAMERA_DEPTH * 1.08), offset: 1 },
     ], {
       duration: INTRO_FLIGHT_MS,
       easing: "cubic-bezier(.55, .05, .8, .45)",
@@ -108,7 +110,7 @@ export default function IntroLogo({ flying, onReady, onFlightComplete }: Props) 
     })
     void animation.finished.then(onFlightComplete).catch(() => {})
     return () => animation?.cancel()
-  }, [flying, onFlightComplete])
+  }, [flying, onFlightComplete, placeLogo])
 
   return <div className="home-intro-logo"><div className="home-intro-logo-plane" ref={plane} /></div>
 }

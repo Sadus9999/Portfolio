@@ -16,6 +16,7 @@ type Phase = "buffer" | "intro" | "page" | "scroll"
 const LOOK_AHEAD = 12
 const MAX_CACHED_FRAMES = 36
 const FRAME_MS = 1000 / 30
+const SCROLL_DISTANCE_IN_VIEWPORTS = .4
 const clamp = (x: number, min: number, max: number) => Math.max(min, Math.min(max, x))
 
 export default function PlanetSequence({ base, first, last, introEnd, initialFrame }: Props) {
@@ -72,7 +73,8 @@ export default function PlanetSequence({ base, first, last, introEnd, initialFra
     let direction = 1
 
     const distance = () => Math.max(0, -section.getBoundingClientRect().top)
-    const scrollLength = () => Math.max(1, window.innerHeight * 1.25)
+    // Finish the reverse move while the Hero is still clearly visible.
+    const scrollLength = () => Math.max(1, window.innerHeight * SCROLL_DISTANCE_IN_VIEWPORTS)
     const display = (n: number) => {
       const item = cache.get(n)
       if (!item || !item.complete || !item.naturalWidth) return false
