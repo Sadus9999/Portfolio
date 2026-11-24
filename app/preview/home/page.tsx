@@ -70,7 +70,7 @@ export default async function PreviewHomePage() {
           <div className="hero-headline">
             <p className="hero-eyebrow">{h.eyebrow}</p>
             <h1><span>{h.headlineTop}</span><em>{h.headlineBottom}</em></h1>
-            <a className="home-pill hero-cta" href="#case-studies">{h.cta}</a>
+            <a className="home-pill home-grid-cta hero-cta" href="#case-studies">{h.cta}</a>
           </div>
         </div>
       </section>
@@ -78,7 +78,7 @@ export default async function PreviewHomePage() {
       <section className="home-section home-about" id="about">
         <Heading>About me</Heading>
         <p className="home-statement" data-reveal="text"><HighlightedStatement value={content.about.statement}/></p>
-        <Link href="/about" className="home-pill home-center-cta" data-reveal="text" data-reveal-order={1}>{content.about.cta}</Link>
+        <Link href="/about" className="home-pill home-grid-cta home-center-cta" data-reveal="text" data-reveal-order={1}>{content.about.cta}</Link>
       </section>
 
       <section className="home-section home-services">
@@ -130,7 +130,7 @@ export default async function PreviewHomePage() {
               external
             />
           ))}
-          <Link href="/portfolio" className="home-pill works-cta" data-reveal="text" data-reveal-order={2}>SEE ALL WORKS</Link>
+          <Link href="/portfolio" className="home-pill home-grid-cta works-cta" data-reveal="text" data-reveal-order={2}>SEE ALL WORKS</Link>
         </div>
       </section>
 
@@ -144,7 +144,7 @@ export default async function PreviewHomePage() {
               </div>
             ))}
           </div>
-          {content.capabilities.cvUrl && <a className="home-pill" href={content.capabilities.cvUrl} data-reveal="text">Download CV</a>}
+          {content.capabilities.cvUrl && <a className="home-pill home-grid-cta" href={content.capabilities.cvUrl} data-reveal="text">Download CV</a>}
         </div>
       </section>
 
