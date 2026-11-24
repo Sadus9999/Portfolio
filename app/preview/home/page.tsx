@@ -63,7 +63,7 @@ export default async function PreviewHomePage() {
       </header>
 
       <section className="home-hero" id="top">
-        <PlanetSequence base={h.sequenceBase} first={h.firstFrame} last={h.lastFrame} autoplayEnd={h.autoplayEnd}/>
+        <PlanetSequence base={h.sequenceBase} first={h.firstFrame} last={h.lastFrame} introEnd={h.autoplayEnd} initialFrame={introEnabled ? h.firstFrame : h.autoplayEnd}/>
         <div className="hero-content">
           <p className="hero-note hero-note-left">{h.leftNote}</p>
           <p className="hero-note hero-note-right">{h.rightNote}</p>

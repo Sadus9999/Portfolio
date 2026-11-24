@@ -65,6 +65,7 @@
 }
 .home-intro-skip:focus-visible { outline: 2px solid var(--dng-focus); outline-offset: 5px; }
 .home-intro[data-phase="flying"] .home-intro-logo-plane { will-change: transform; }
+.home-intro[data-phase="intro"] .home-intro-backdrop { opacity: 0; }
 .home-intro[data-phase="flying"] .home-intro-progress { opacity: 0; translate: 0 12px; }
 .home-intro[data-phase="flying"] .home-intro-backdrop {
   animation: home-intro-background-exit calc(var(--intro-flight-duration) * .25) ease-out calc(var(--intro-flight-duration) * .75) both;
@@ -76,7 +77,7 @@
   to { opacity: 1; transform: none; filter: blur(0); }
 }
 @media (prefers-reduced-motion: no-preference) {
-  .home-experience:is([data-intro-phase="loading"], [data-intro-phase="flying"])
+  .home-experience:is([data-intro-phase="loading"], [data-intro-phase="flying"], [data-intro-phase="intro"])
     :is(.home-header, .hero-note, .hero-eyebrow, .hero-headline h1 > span, .hero-headline h1 > em, .hero-cta) { opacity: 0; }
   .home-experience[data-intro-phase="revealing"]
     :is(.home-header, .hero-note, .hero-eyebrow, .hero-headline h1 > span, .hero-headline h1 > em, .hero-cta) {

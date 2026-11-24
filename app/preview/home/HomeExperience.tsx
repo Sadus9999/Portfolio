@@ -5,12 +5,13 @@ import type { CSSProperties, ReactNode } from "react"
 import IntroLogo, { INTRO_FLIGHT_MS } from "./IntroLogo"
 import { INTRO_SESSION_COOKIE, INTRO_SESSION_VALUE } from "./intro-session"
 
-type IntroPhase = "checking" | "loading" | "flying" | "revealing" | "ready"
+type IntroPhase = "checking" | "loading" | "flying" | "intro" | "revealing" | "ready"
 
 export const HomeIntroContext = createContext<{
-  paused: boolean
+  playback: "hold" | "intro" | "page"
   onProgress: (value: number) => void
   onReady: () => void
+  onIntroComplete: () => void
 } | null>(null)
 
 function hasSeenIntro() {
@@ -51,19 +52,22 @@ export default function HomeExperience({ introEnabled, children }: { introEnable
   const content = useRef<HTMLDivElement>(null)
   const skipButton = useRef<HTMLButtonElement>(null)
   const started = useRef(false)
-  const visible = phase === "checking" || phase === "loading" || phase === "flying"
-  const blocking = phase === "loading" || phase === "flying"
+  const showingLogo = phase === "checking" || phase === "loading" || phase === "flying"
+  const visible = showingLogo || phase === "intro"
+  const blocking = phase === "loading" || phase === "flying" || phase === "intro"
+  const playback: "hold" | "intro" | "page" = showingLogo ? "hold" : phase === "intro" ? "intro" : "page"
 
   const skip = useCallback(() => setPhase("ready"), [])
   const onLogoReady = useCallback(() => setLogoReady(true), [])
-  const onFlightComplete = useCallback(() => setPhase(current => current === "flying" ? "revealing" : current), [])
+  const onFlightComplete = useCallback(() => setPhase(current => current === "flying" ? "intro" : current), [])
+  const onIntroComplete = useCallback(() => setPhase(current => current === "intro" ? "revealing" : current), [])
   const onProgress = useCallback((value: number) => {
     if (introEnabled) setProgress(Math.max(0, Math.min(100, Math.round(value))))
   }, [introEnabled])
   const onReady = useCallback(() => {
     if (introEnabled) setAssetsReady(true)
   }, [introEnabled])
-  const controls = useMemo(() => ({ paused: visible, onProgress, onReady }), [visible, onProgress, onReady])
+  const controls = useMemo(() => ({ playback, onProgress, onReady, onIntroComplete }), [playback, onProgress, onReady, onIntroComplete])
 
   useEffect(() => {
     if (!introEnabled || (!started.current && hasSeenIntro())) {
@@ -105,6 +109,13 @@ export default function HomeExperience({ introEnabled, children }: { introEnable
   }, [phase, assetsReady, logoReady, fontsReady, minimumElapsed])
 
   useEffect(() => {
+    if (phase !== "intro") return
+    // A stalled frame request must not leave the interface hidden indefinitely.
+    const timeout = window.setTimeout(onIntroComplete, 12000)
+    return () => window.clearTimeout(timeout)
+  }, [phase, onIntroComplete])
+
+  useEffect(() => {
     if (phase !== "revealing") return
     const timeout = window.setTimeout(() => setPhase("ready"), 1400)
     return () => window.clearTimeout(timeout)
@@ -144,15 +155,15 @@ export default function HomeExperience({ introEnabled, children }: { introEnable
         {visible && <div className="home-intro" data-phase={phase} role="dialog" aria-modal="true" aria-label="Preparing the DEMIGOD portfolio"
           style={{ "--intro-flight-duration": `${INTRO_FLIGHT_MS}ms` } as CSSProperties}>
           <div className="home-intro-backdrop" />
-          <div className="home-intro-scene" aria-hidden="true">
+          {showingLogo && <div className="home-intro-scene" aria-hidden="true">
             <IntroLogo flying={phase === "flying"} onReady={onLogoReady} onFlightComplete={onFlightComplete} />
-          </div>
-          <div className="home-intro-progress">
+          </div>}
+          {showingLogo && <div className="home-intro-progress">
             <span aria-hidden="true">{progress}%</span>
             <div className="home-intro-track" role="progressbar" aria-label="Loading the planet animation" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
               <div style={{ transform: `scaleX(${progress / 100})` }} />
             </div>
-          </div>
+          </div>}
           <button ref={skipButton} type="button" className="home-pill home-intro-skip" onClick={skip}>Skip intro</button>
         </div>}
         <div ref={content} className="home-content" aria-hidden={blocking || undefined}>{children}</div>

@@ -2,42 +2,48 @@
 
 import { useContext, useEffect, useRef, useState } from "react"
 import { HomeIntroContext } from "./HomeExperience"
+import { heroFrameUrl } from "./hero-sequence"
 
 type Props = {
   base: string
   first: number
   last: number
-  autoplayEnd: number
+  introEnd: number
+  initialFrame: number
 }
 
+type Phase = "buffer" | "intro" | "page" | "scroll"
+const LOOK_AHEAD = 12
+const MAX_CACHED_FRAMES = 36
+const FRAME_MS = 1000 / 30
 const clamp = (x: number, min: number, max: number) => Math.max(min, Math.min(max, x))
 
-export default function PlanetSequence({ base, first, last, autoplayEnd }: Props) {
+export default function PlanetSequence({ base, first, last, introEnd, initialFrame }: Props) {
   const region = useRef<HTMLDivElement>(null)
   const output = useRef<HTMLImageElement>(null)
   const [ready, setReady] = useState(false)
   const intro = useContext(HomeIntroContext)
-  const isPaused = intro?.paused ?? false
+  const playback = intro?.playback ?? "page"
   const onProgress = intro?.onProgress
   const onInitialReady = intro?.onReady
-  const paused = useRef(isPaused)
-  const resume = useRef<() => void>(() => {})
+  const onIntroComplete = intro?.onIntroComplete
+  const mode = useRef(playback)
+  const reconcile = useRef<() => void>(() => {})
 
   useEffect(() => {
-    paused.current = isPaused
-    if (!isPaused) resume.current()
-  }, [isPaused])
+    mode.current = playback
+    reconcile.current()
+  }, [playback])
 
   useEffect(() => {
     const img = output.current
     const section = region.current
     if (!img || !section) return
-
-    const url = (n: number) => base.replace(/\/?$/, "/") + n + ".webp"
+    const url = (n: number) => heroFrameUrl(base, n)
     const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)")
     if (img.complete && !img.naturalWidth) img.style.visibility = "hidden"
     if (reducedMotion.matches) {
-      img.src = url(first)
+      img.src = url(last)
       setReady(true)
       onProgress?.(100)
       onInitialReady?.()
@@ -45,140 +51,243 @@ export default function PlanetSequence({ base, first, last, autoplayEnd }: Props
     }
 
     const cache = new Map<number, HTMLImageElement>()
-    const pending = new Set<number>()
+    const pending = new Map<number, HTMLImageElement>()
+    const timeouts = new Map<number, number>()
     const failed = new Set<number>()
     const settled = new Set<number>()
-    const initialCount = autoplayEnd - first + 1
     const queue: number[] = []
-    let active = 0
+    const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => from + i)
+    const pageBuffer = range(introEnd, Math.min(last, introEnd + LOOK_AHEAD))
+    const introBuffer = [...new Set([...range(first, Math.min(introEnd, first + LOOK_AHEAD)), ...pageBuffer])]
     let disposed = false
-    let phase: "buffer" | "play" | "scroll" = "buffer"
-    let current = first
+    let announcedReady = false
+    let introFinished = false
+    let phase: Phase = "buffer"
+    let current = initialFrame
+    let timeline = initialFrame
+    let wanted = initialFrame
+    let lastStep = 0
     let frameRaf = 0
-    let start = 0
-    let wanted = first
+    let anchor = { distance: 0, frame: last }
+    let direction = 1
 
+    const distance = () => Math.max(0, -section.getBoundingClientRect().top)
+    const scrollLength = () => Math.max(1, window.innerHeight * 1.25)
     const display = (n: number) => {
       const item = cache.get(n)
-      if (!item || !item.complete || !item.naturalWidth || !output.current) return false
-      if (n !== current || !output.current.src || !output.current.naturalWidth) {
-        output.current.src = item.src
-        current = n
-      }
+      if (!item || !item.complete || !item.naturalWidth) return false
+      if (n !== current || !img.naturalWidth) img.src = item.src
+      current = n
       return true
     }
 
-    const enqueue = (n: number, urgent = false) => {
-      if (n < first || n > last || cache.has(n) || pending.has(n) || failed.has(n) || queue.includes(n)) return
+    function enqueue(n: number, urgent = false) {
+      if (n < first || n > last || cache.has(n) || pending.has(n) || failed.has(n)) return
+      const index = queue.indexOf(n)
+      if (index !== -1) {
+        if (!urgent) return
+        queue.splice(index, 1)
+      }
       if (urgent) queue.unshift(n)
       else queue.push(n)
       pump()
     }
 
-    const pump = () => {
-      while (!disposed && active < 7 && queue.length > 0) {
+    function prepareWindow(center: number, reverse = false) {
+      const min = Math.max(phase === "intro" ? first : introEnd, center - (reverse ? LOOK_AHEAD : 4))
+      const max = Math.min(last, center + (reverse ? 4 : LOOK_AHEAD))
+      // Cancel stale queued work when a fast scroll changes direction or jumps to an anchor.
+      for (let i = queue.length - 1; i >= 0; i--) {
+        if (queue[i] < min || queue[i] > max) queue.splice(i, 1)
+      }
+      enqueue(center, true)
+      for (let offset = 1; offset <= LOOK_AHEAD; offset++) {
+        const next = center + (reverse ? -offset : offset)
+        if (next >= min && next <= max) enqueue(next)
+      }
+      for (let n = min; n <= max; n++) enqueue(n)
+      if (cache.size > MAX_CACHED_FRAMES) {
+        for (const key of cache.keys()) {
+          const reservedForPage = phase === "intro" && pageBuffer.includes(key)
+          if (key !== current && !reservedForPage && (key < min || key > max)) cache.delete(key)
+        }
+      }
+    }
+
+    function checkBuffer() {
+      if (announcedReady) return
+      const required = mode.current === "page" ? pageBuffer : introBuffer
+      const count = required.filter(n => settled.has(n)).length
+      onProgress?.(count / required.length * 100)
+      if (count === required.length) {
+        announcedReady = true
+        setReady(true)
+        onInitialReady?.()
+      }
+    }
+
+    function pump() {
+      while (!disposed && pending.size < 7 && queue.length > 0) {
         const n = queue.shift()!
-        if (cache.has(n) || pending.has(n)) continue
-        pending.add(n)
-        active++
+        if (cache.has(n) || pending.has(n) || failed.has(n)) continue
         const image = new Image()
         image.decoding = "async"
+        pending.set(n, image)
+        let finished = false
         const finish = (success: boolean) => {
-          active--
+          if (finished) return
+          finished = true
+          window.clearTimeout(timeouts.get(n))
+          timeouts.delete(n)
+          image.onload = image.onerror = null
           pending.delete(n)
           if (disposed) return
+          settled.add(n)
           if (success) {
             cache.set(n, image)
-            if (n === first && phase === "buffer") display(first)
-            if (phase === "scroll" && n === wanted) display(n)
+            if ((phase === "scroll" && n === wanted) || (phase === "buffer" && n === (mode.current === "page" ? introEnd : first))) display(n)
           } else {
             failed.add(n)
+            image.removeAttribute("src")
             console.warn("Missing animation frame", n)
           }
-          if (n <= autoplayEnd) {
-            settled.add(n)
-            onProgress?.(settled.size / initialCount * 100)
-            if (settled.size === initialCount) {
-              setReady(true)
-              onInitialReady?.()
-              startPlayback()
-            }
-          }
+          checkBuffer()
+          syncPlayback()
           pump()
         }
         image.onload = () => finish(true)
         image.onerror = () => finish(false)
+        timeouts.set(n, window.setTimeout(() => finish(false), 8000))
         image.src = url(n)
       }
     }
 
-    function startPlayback() {
-      if (disposed || phase !== "buffer" || settled.size < initialCount || paused.current) return
-      if (reducedMotion.matches || cache.size === 0) {
-        phase = "scroll"
-        return
-      }
-      phase = "play"
-      start = performance.now()
+    function startSegment(next: "intro" | "page") {
+      cancelAnimationFrame(frameRaf)
+      phase = next
+      timeline = next === "intro" ? first : introEnd
+      wanted = timeline
+      display(timeline)
+      prepareWindow(timeline)
+      lastStep = performance.now()
       frameRaf = requestAnimationFrame(tick)
     }
-    resume.current = startPlayback
+
+    function syncPlayback() {
+      if (disposed || mode.current === "hold" || reducedMotion.matches) return
+      if (mode.current === "page" && (phase === "intro" || phase === "buffer")) {
+        // Free loader slots immediately when Skip or the watchdog bypasses intro.
+        for (const [n, image] of pending) {
+          if (n >= introEnd) continue
+          image.onload = image.onerror = null
+          image.removeAttribute("src")
+          pending.delete(n)
+          window.clearTimeout(timeouts.get(n))
+          timeouts.delete(n)
+        }
+        for (let i = queue.length - 1; i >= 0; i--) {
+          if (queue[i] < introEnd) queue.splice(i, 1)
+        }
+        for (const n of pageBuffer) enqueue(n)
+        pump()
+      }
+      checkBuffer()
+      if (mode.current === "page" && phase === "intro") {
+        startSegment("page") // Skip intro also skips the planet's first segment.
+      } else if (phase === "buffer" && announcedReady) {
+        if (mode.current === "intro" && !introFinished) startSegment("intro")
+        if (mode.current === "page") {
+          if (distance() > 1) {
+            phase = "scroll"
+            update()
+          } else startSegment("page")
+        }
+      }
+    }
+    reconcile.current = syncPlayback
 
     function tick(time: number) {
-      if (disposed || phase !== "play") return
-      if (reducedMotion.matches) {
-        phase = "scroll"
-        return
-      }
-      const target = clamp(first + Math.floor((time - start) * 0.03), first, autoplayEnd)
-      if (!display(target)) enqueue(target, true)
-      for (let i = current + 1; i <= Math.min(last, current + 12); i++) enqueue(i)
-      if (target >= autoplayEnd) {
-        phase = "scroll"
-        update()
-        return
+      if (disposed || (phase !== "intro" && phase !== "page") || reducedMotion.matches) return
+      const end = phase === "intro" ? introEnd : last
+      const elapsed = time - lastStep
+      if (elapsed >= FRAME_MS) {
+        // A background tab or late frame must not skip the entire camera move.
+        const target = Math.min(end, timeline + Math.min(3, Math.floor(elapsed / FRAME_MS)))
+        if (display(target) || failed.has(target)) {
+          timeline = target
+          lastStep = time - elapsed % FRAME_MS
+          prepareWindow(timeline)
+          if (timeline === end) {
+            if (phase === "intro") {
+              introFinished = true
+              phase = "buffer"
+              onIntroComplete?.()
+            } else {
+              phase = "scroll"
+              anchor = { distance: 0, frame: last }
+              update()
+            }
+            return
+          }
+        } else {
+          enqueue(target, true)
+          lastStep = time
+        }
       }
       frameRaf = requestAnimationFrame(tick)
     }
 
     function update() {
-      if (phase !== "scroll" || disposed || reducedMotion.matches || !region.current) return
-      const rect = region.current.getBoundingClientRect()
-      // The visual hero matches the Figma artboard height; scrub across
-      // the following viewport rather than adding an empty 260vh section.
-      const length = Math.max(1, window.innerHeight * 1.25)
-      const p = clamp(-rect.top / length, 0, 1)
-      wanted = clamp(autoplayEnd + Math.round(p * (last - autoplayEnd)), autoplayEnd, last)
-      if (!display(wanted)) {
-        enqueue(wanted, true)
-        // Keep the previous visible frame until the exact target loads.
+      if (disposed || reducedMotion.matches || (phase !== "page" && phase !== "scroll")) return
+      const travelled = distance()
+      if (phase === "page") {
+        if (travelled <= 1) return
+        // Start reversing from the visible frame if the visitor scrolls during autoplay.
+        cancelAnimationFrame(frameRaf)
+        phase = "scroll"
+        anchor = { distance: travelled, frame: current }
       }
-      for (let i = wanted - 10; i <= wanted + 15; i++) enqueue(i)
-      if (cache.size > 100) {
-        for (const key of cache.keys()) {
-          if (key !== current && Math.abs(key - wanted) > 45) cache.delete(key)
-        }
-      }
+      const previous = wanted
+      const frame = anchor.distance > 0 && travelled < anchor.distance
+        ? last - (last - anchor.frame) * travelled / anchor.distance
+        : anchor.frame - (travelled - anchor.distance) / scrollLength() * (last - introEnd)
+      wanted = clamp(Math.round(frame), introEnd, last)
+      direction = Math.sign(wanted - previous) || direction
+      display(wanted)
+      prepareWindow(wanted, direction < 0)
     }
 
-    for (let i = first; i <= autoplayEnd; i++) enqueue(i)
+    const onMotionChange = () => {
+      if (!reducedMotion.matches) return
+      cancelAnimationFrame(frameRaf)
+      phase = "scroll"
+      wanted = last
+      img.src = url(last)
+    }
+    for (const n of mode.current === "page" ? pageBuffer : introBuffer) enqueue(n)
     window.addEventListener("scroll", update, { passive: true })
     window.addEventListener("resize", update)
+    reducedMotion.addEventListener("change", onMotionChange)
     return () => {
       disposed = true
-      resume.current = () => {}
+      reconcile.current = () => {}
       cancelAnimationFrame(frameRaf)
       window.removeEventListener("scroll", update)
       window.removeEventListener("resize", update)
+      reducedMotion.removeEventListener("change", onMotionChange)
+      for (const image of pending.values()) image.onload = image.onerror = null
+      for (const timeout of timeouts.values()) window.clearTimeout(timeout)
+      timeouts.clear()
       cache.clear()
+      pending.clear()
       queue.length = 0
     }
-  }, [base, first, last, autoplayEnd, onProgress, onInitialReady])
+  }, [base, first, last, introEnd, initialFrame, onProgress, onInitialReady, onIntroComplete])
 
   return (
     <div ref={region} className="planet-scroll" aria-hidden="true">
       <div className="planet-sticky">
-        <img ref={output} src={base.replace(/\/?$/, "/") + first + ".webp"} alt="" draggable={false}
+        <img ref={output} src={heroFrameUrl(base, initialFrame)} alt="" draggable={false}
           onError={event => { event.currentTarget.style.visibility = "hidden" }}
           onLoad={event => { event.currentTarget.style.visibility = "visible" }} />
         <div className="planet-vignette" />

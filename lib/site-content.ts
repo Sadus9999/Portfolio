@@ -41,9 +41,10 @@ export const defaultSiteContent: SiteContent = {
     rightNote: "Less friction.\nMore clarity.\nBetter experiences.",
     cta: "View case studies",
     sequenceBase: "https://pub-eff24699f34649e8bb817dacedb2d952.r2.dev/hero/frames/",
-    firstFrame: 1000,
-    lastFrame: 1239,
-    autoplayEnd: 1059,
+    // The R2 export includes frame zero (1000); movie frames 1–191 are 1001–1191.
+    firstFrame: 1001,
+    lastFrame: 1191,
+    autoplayEnd: 1110,
     introEnabled: true,
   },
   about: {
