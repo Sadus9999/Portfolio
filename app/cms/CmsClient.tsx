@@ -50,6 +50,7 @@ const FILTERS = [
   "Illustrator",
   "DTP",
   "Project management",
+  "Concept Art (No AI)",
 ]
 
 type View = "list" | "grid" | "edit" | "upload"
